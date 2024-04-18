@@ -1,9 +1,12 @@
+pub mod traits;
+use traits::*;
+
 /// A span in `char`s
 pub type Span = std::ops::Range<usize>;
 
 type PeekingLexer<'src, Number> = Peeking<Lexer<'src, Number>, Result<Token<Number>, Span>>;
 
-pub fn to_nodes<T: Clone + std::str::FromStr>(s: &str) -> Result<Node<T>, Span> {
+pub fn to_nodes<T: Clone + Numeral>(s: &str) -> Result<Node<T>, Span> {
     let lex = Lexer::<T> {
         source: s.chars(),
         start_index: 0,
@@ -23,7 +26,7 @@ pub fn to_nodes<T: Clone + std::str::FromStr>(s: &str) -> Result<Node<T>, Span> 
     Ok(e)
 }
 
-fn parse_expr_climb<T: Clone + std::str::FromStr>(lex: &mut PeekingLexer<'_, T>, percedence: usize) -> Result<Node<T>, Span> {
+fn parse_expr_climb<T: Clone + Numeral>(lex: &mut PeekingLexer<'_, T>, percedence: usize) -> Result<Node<T>, Span> {
     let mut rest = parse_single(lex)?;
 
     loop {
@@ -84,7 +87,7 @@ fn add_node_right<T: Clone>(rest: &mut Node<T>, op: BiOpr, right: Node<T>) {
     }
 }
 
-fn parse_single<T: Clone + std::str::FromStr>(lex: &mut PeekingLexer<'_, T>) -> Result<Node<T>, Span> {
+fn parse_single<T: Clone + Numeral>(lex: &mut PeekingLexer<'_, T>) -> Result<Node<T>, Span> {
     let t = lex.next();
 
     match t.ok_or_else(|| lex.report_span())?? {
@@ -233,7 +236,7 @@ struct Lexer<'src, Number> {
     _num: std::marker::PhantomData<Number>,
 }
 
-impl<Number: std::str::FromStr> Iterator for Lexer<'_, Number> {
+impl<Number: Numeral> Iterator for Lexer<'_, Number> {
     type Item = Result<Token<Number>, Span>;
 
     fn next(&mut self) -> Option<Result<Token<Number>, Span>> {
@@ -268,9 +271,12 @@ impl<Number: std::str::FromStr> Iterator for Lexer<'_, Number> {
 
                 Some(acc.parse().map_or_else(|_| Err(self.report_span()),|a| Ok(Token::Number(a))))
             },
-            'π' => Some(Ok(Token::Number(Number::from_str(&core::f64::consts::PI.to_string()).ok().unwrap()))),
             _ if c.is_whitespace() => self.next(),
-            _ => Some(Err(self.report_span())),
+            _ => if let Some(c) = Number::from_constant(c) {
+                Some(Ok(Token::Number(c)))
+            } else {
+                Some(Err(self.report_span()))
+            },
         }
     }
 }

@@ -1,0 +1,8 @@
+[package]
+name = "calculate_inf"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+calculate = { path = ".." }
+fraction = "0.15.1"
