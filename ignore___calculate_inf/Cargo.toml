@@ -6,3 +6,4 @@ edition = "2021"
 [dependencies]
 calculate = { path = ".." }
 fraction = "0.15.1"
+lazy_static = "1.4.0"

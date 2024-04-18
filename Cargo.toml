@@ -1,5 +1,5 @@
 [workspace]
-members = [ "calculate_inf","pages"]
+members = ["pages"]
 
 [package]
 name = "calculate"
