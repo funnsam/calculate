@@ -21,6 +21,8 @@ jobs:
       - uses: actions/checkout@v3
       - name: Get dependencies
         steps: |
+          curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+          sudo apt install binaryen
       - name: Build bindings
         run: |
           cd pages
