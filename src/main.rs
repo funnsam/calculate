@@ -1,6 +1,6 @@
 fn main() {
     let arg = std::env::args().skip(1).collect::<Vec<String>>().join(" ");
-    let n = calculate::to_nodes(&arg);
+    let n = calculate::to_nodes::<f64>(&arg);
 
     n.map_or_else(|s| {
         println!("\x1b[1;31mError:\x1b[0m");

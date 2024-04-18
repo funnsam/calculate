@@ -128,16 +128,6 @@ pub enum NodeKind<Number> {
     UnOp(UnOpr, Box<Node<Number>>),
 }
 
-impl Node<f32> {
-    pub fn evaluate(&self) -> f32 {
-        match &self.kind {
-            NodeKind::BiOp(l, op, r) => op.operate(l.evaluate(), r.evaluate()),
-            NodeKind::UnOp(op, v) => op.operate(v.evaluate()),
-            NodeKind::Number(v) => *v,
-        }
-    }
-}
-
 #[derive(Debug, Clone, Copy)]
 enum OperatorRaw {
     Plus, Minus, Multiply, Divide, Power,
@@ -186,7 +176,19 @@ impl BiOpr {
         !matches!(self, Self::Power)
     }
 
+    #[cfg(not(feature = "any_float"))]
     fn operate(self, l: f32, r: f32) -> f32 {
+        match self {
+            Self::Add => l + r,
+            Self::Subtract => l - r,
+            Self::Multiply => l * r,
+            Self::Divide => l / r,
+            Self::Power => l.powf(r),
+        }
+    }
+
+    #[cfg(feature = "any_float")]
+    fn operate<F: num_traits::Float>(self, l: F, r: F) -> F {
         match self {
             Self::Add => l + r,
             Self::Subtract => l - r,
@@ -204,10 +206,41 @@ impl UnOpr {
         }
     }
 
+    #[cfg(not(feature = "any_float"))]
     fn operate(self, v: f32) -> f32 {
         match self {
             Self::Plus => v,
             Self::Minus => -v,
+        }
+    }
+
+    #[cfg(feature = "any_float")]
+    fn operate<F: num_traits::Float>(self, v: F) -> F {
+        match self {
+            Self::Plus => v,
+            Self::Minus => -v,
+        }
+    }
+}
+
+#[cfg(not(feature = "any_float"))]
+impl Node<f32> {
+    pub fn evaluate(&self) -> f32 {
+        match &self.kind {
+            NodeKind::BiOp(l, op, r) => op.operate(l.evaluate(), r.evaluate()),
+            NodeKind::UnOp(op, v) => op.operate(v.evaluate()),
+            NodeKind::Number(v) => *v,
+        }
+    }
+}
+
+#[cfg(feature = "any_float")]
+impl<F: num_traits::Float> Node<F> {
+    pub fn evaluate(&self) -> F {
+        match &self.kind {
+            NodeKind::BiOp(l, op, r) => op.operate(l.evaluate(), r.evaluate()),
+            NodeKind::UnOp(op, v) => op.operate(v.evaluate()),
+            NodeKind::Number(v) => *v,
         }
     }
 }
@@ -343,6 +376,6 @@ mod tests {
     #[test]
     fn tests() {
         let test = "1 + 2 * 3(4.5 + -3.5)";
-        assert_eq!(super::to_nodes(test).unwrap().evaluate(), 7.0);
+        assert_eq!(super::to_nodes::<f32>(test).unwrap().evaluate(), 7.0);
     }
 }
