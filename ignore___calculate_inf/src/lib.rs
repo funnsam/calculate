@@ -12,12 +12,8 @@ pub struct InfPrecNumber {
 #[repr(u8)]
 #[derive(Clone)]
 enum Factor {
-    Rational(Rational),
-    Pi(Rational),
-    E(Rational),
-    GoldenRatio(Rational),
-    EulersConstant(Rational),
-    IrrationalRoot(Rational, Rational),
+    RationalPow(Rational, InfPrecNumber),
+    VariablePow(char, InfPrecNumber),
 }
 
 impl Factor {
@@ -26,25 +22,27 @@ impl Factor {
     }
 }
 
+impl InfPrecNumber {
+    fn zero() -> Self {
+        Self {
+            factors: vec![Factor::RationalPow(Rational::from(0))],
+        }
+    }
+}
+
 impl std::str::FromStr for InfPrecNumber {
     type Err = <Rational as std::str::FromStr>::Err;
 
     fn from_str(s: &str) -> Result<Self, <Self as std::str::FromStr>::Err> {
         Ok(Self {
-            factors: vec![Factor::Rational(s.parse()?)],
+            factors: vec![Factor::RationalPow(s.parse()?, Self::zero())],
         })
     }
 }
 
 impl FromConstant for InfPrecNumber {
     fn from_constant(c: char) -> Option<Self> {
-        match c {
-            'π' => Some(Self { factors: vec![Factor::Pi(Rational::from(1))] }),
-            'e' => Some(Self { factors: vec![Factor::E(Rational::from(1))] }),
-            'φ' => Some(Self { factors: vec![Factor::GoldenRatio(Rational::from(1))] }),
-            'ψ' => Some(Self { factors: vec![Factor::EulersConstant(Rational::from(1))] }),
-            _ => None,
-        }
+        Some(Self { factors: vec![Factor::VariablePow(c, Self::zero())] })
     }
 }
 

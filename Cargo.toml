@@ -10,5 +10,6 @@ edition = "2021"
 num-traits = { version = "0.2.18", optional = true }
 
 [features]
-default = ["any_float"]
-any_float = ["dep:num-traits"]
+default = ["any_num", "std"]
+any_num = ["dep:num-traits"]
+std = []

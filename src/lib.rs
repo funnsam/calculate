@@ -1,8 +1,13 @@
+#![cfg_attr(not(feature = "std"), no_std)]
+extern crate alloc;
+
 pub mod traits;
+
+use alloc::{boxed::Box, string::ToString};
 use traits::*;
 
 /// A span in `char`s
-pub type Span = std::ops::Range<usize>;
+pub type Span = core::ops::Range<usize>;
 
 type PeekingLexer<'src, Number> = Peeking<Lexer<'src, Number>, Result<Token<Number>, Span>>;
 
@@ -13,7 +18,7 @@ pub fn to_nodes<T: Clone + Numeral>(s: &str) -> Result<Node<T>, Span> {
         end_index: 0,
         skipped: None,
 
-        _num: std::marker::PhantomData::default(),
+        _num: core::marker::PhantomData::default(),
     };
     let mut lex = Peeking::from_iter(lex);
 
@@ -26,7 +31,10 @@ pub fn to_nodes<T: Clone + Numeral>(s: &str) -> Result<Node<T>, Span> {
     Ok(e)
 }
 
-fn parse_expr_climb<T: Clone + Numeral>(lex: &mut PeekingLexer<'_, T>, percedence: usize) -> Result<Node<T>, Span> {
+fn parse_expr_climb<T: Clone + Numeral>(
+    lex: &mut PeekingLexer<'_, T>,
+    percedence: usize,
+) -> Result<Node<T>, Span> {
     let mut rest = parse_single(lex)?;
 
     loop {
@@ -40,7 +48,8 @@ fn parse_expr_climb<T: Clone + Numeral>(lex: &mut PeekingLexer<'_, T>, percedenc
 
                 lex.next();
 
-                let rhs = parse_expr_climb(lex, op.percedence() + op.is_left_associative() as usize)?;
+                let rhs =
+                    parse_expr_climb(lex, op.percedence() + op.is_left_associative() as usize)?;
 
                 let rest_start = rest.span.start;
                 let rhs_end = rhs.span.end;
@@ -54,8 +63,13 @@ fn parse_expr_climb<T: Clone + Numeral>(lex: &mut PeekingLexer<'_, T>, percedenc
                     add_node_right(&mut rest, op, rhs);
                 }
             },
-            Some(Ok(Token::BStart(_) | Token::Number(_))) if BiOpr::Multiply.percedence() >= percedence => {
-                let rhs = parse_expr_climb(lex, BiOpr::Multiply.percedence() + BiOpr::Multiply.is_left_associative() as usize)?;
+            Some(Ok(Token::BStart(_) | Token::Number(_)))
+                if BiOpr::Multiply.percedence() >= percedence =>
+            {
+                let rhs = parse_expr_climb(
+                    lex,
+                    BiOpr::Multiply.percedence() + BiOpr::Multiply.is_left_associative() as usize,
+                )?;
 
                 let rest_start = rest.span.start;
                 let rhs_end = rhs.span.end;
@@ -91,7 +105,10 @@ fn parse_single<T: Clone + Numeral>(lex: &mut PeekingLexer<'_, T>) -> Result<Nod
     let t = lex.next();
 
     match t.ok_or_else(|| lex.report_span())?? {
-        Token::Number(num) => Ok(Node { kind: NodeKind::Number(num), span: lex.report_span() }),
+        Token::Number(num) => Ok(Node {
+            kind: NodeKind::Number(num),
+            span: lex.report_span(),
+        }),
         Token::BStart(k) => {
             let inner = parse_expr_climb(lex, 0)?;
             if let Some(Ok(Token::BEnd(ke))) = lex.next() {
@@ -109,7 +126,10 @@ fn parse_single<T: Clone + Numeral>(lex: &mut PeekingLexer<'_, T>) -> Result<Nod
             let op = op.unary().unwrap();
             let expr = parse_expr_climb(lex, op.percedence())?;
             let expr_end = expr.span.end;
-            Ok(Node { kind: NodeKind::UnOp(op, Box::new(expr)), span: op_span.start..expr_end })
+            Ok(Node {
+                kind: NodeKind::UnOp(op, Box::new(expr)),
+                span: op_span.start..expr_end,
+            })
         },
         _ => Err(lex.report_span()),
     }
@@ -130,17 +150,26 @@ pub enum NodeKind<Number> {
 
 #[derive(Debug, Clone, Copy)]
 enum OperatorRaw {
-    Plus, Minus, Multiply, Divide, Power,
+    Plus,
+    Minus,
+    Multiply,
+    Divide,
+    Power,
 }
 
 #[derive(Debug, Clone, Copy)]
 pub enum BiOpr {
-    Add, Subtract, Multiply, Divide, Power,
+    Add,
+    Subtract,
+    Multiply,
+    Divide,
+    Power,
 }
 
 #[derive(Debug, Clone, Copy)]
 pub enum UnOpr {
-    Plus, Minus,
+    Plus,
+    Minus,
 }
 
 impl OperatorRaw {
@@ -172,29 +201,30 @@ impl BiOpr {
         }
     }
 
-    fn is_left_associative(self) -> bool {
-        !matches!(self, Self::Power)
-    }
+    fn is_left_associative(self) -> bool { !matches!(self, Self::Power) }
 
-    #[cfg(not(feature = "any_float"))]
+    #[cfg(not(feature = "any_num"))]
     fn operate(self, l: f32, r: f32) -> f32 {
         match self {
             Self::Add => l + r,
             Self::Subtract => l - r,
             Self::Multiply => l * r,
             Self::Divide => l / r,
+            #[cfg(feature = "std")]
             Self::Power => l.powf(r),
+            #[cfg(not(feature = "std"))]
+            Self::Power => unimplemented!(),
         }
     }
 
-    #[cfg(feature = "any_float")]
-    fn operate<F: num_traits::Float>(self, l: F, r: F) -> F {
+    #[cfg(feature = "any_num")]
+    fn operate<F: ComputableNumeral>(self, l: F, r: F) -> F {
         match self {
             Self::Add => l + r,
             Self::Subtract => l - r,
             Self::Multiply => l * r,
             Self::Divide => l / r,
-            Self::Power => l.powf(r),
+            Self::Power => l.pow(r),
         }
     }
 }
@@ -206,7 +236,7 @@ impl UnOpr {
         }
     }
 
-    #[cfg(not(feature = "any_float"))]
+    #[cfg(not(feature = "any_num"))]
     fn operate(self, v: f32) -> f32 {
         match self {
             Self::Plus => v,
@@ -214,8 +244,8 @@ impl UnOpr {
         }
     }
 
-    #[cfg(feature = "any_float")]
-    fn operate<F: num_traits::Float>(self, v: F) -> F {
+    #[cfg(feature = "any_num")]
+    fn operate<F: ComputableNumeral>(self, v: F) -> F {
         match self {
             Self::Plus => v,
             Self::Minus => -v,
@@ -223,7 +253,7 @@ impl UnOpr {
     }
 }
 
-#[cfg(not(feature = "any_float"))]
+#[cfg(not(feature = "any_num"))]
 impl Node<f32> {
     pub fn evaluate(&self) -> f32 {
         match &self.kind {
@@ -234,13 +264,13 @@ impl Node<f32> {
     }
 }
 
-#[cfg(feature = "any_float")]
-impl<F: num_traits::Float> Node<F> {
+#[cfg(feature = "any_num")]
+impl<F: ComputableNumeral> Node<F> {
     pub fn evaluate(&self) -> F {
         match &self.kind {
             NodeKind::BiOp(l, op, r) => op.operate(l.evaluate(), r.evaluate()),
             NodeKind::UnOp(op, v) => op.operate(v.evaluate()),
-            NodeKind::Number(v) => *v,
+            NodeKind::Number(v) => v.clone(),
         }
     }
 }
@@ -261,12 +291,12 @@ enum BKind {
 }
 
 struct Lexer<'src, Number> {
-    source: std::str::Chars<'src>,
+    source: core::str::Chars<'src>,
     start_index: usize,
     end_index: usize,
     skipped: Option<char>,
 
-    _num: std::marker::PhantomData<Number>,
+    _num: core::marker::PhantomData<Number>,
 }
 
 impl<Number: Numeral> Iterator for Lexer<'_, Number> {
@@ -302,13 +332,18 @@ impl<Number: Numeral> Iterator for Lexer<'_, Number> {
 
                 self.end_index -= 1;
 
-                Some(acc.parse().map_or_else(|_| Err(self.report_span()),|a| Ok(Token::Number(a))))
+                Some(
+                    acc.parse()
+                        .map_or_else(|_| Err(self.report_span()), |a| Ok(Token::Number(a))),
+                )
             },
             _ if c.is_whitespace() => self.next(),
-            _ => if let Some(c) = Number::from_constant(c) {
-                Some(Ok(Token::Number(c)))
-            } else {
-                Some(Err(self.report_span()))
+            _ => {
+                if let Some(c) = Number::from_constant(c) {
+                    Some(Ok(Token::Number(c)))
+                } else {
+                    Some(Err(self.report_span()))
+                }
             },
         }
     }
@@ -325,9 +360,7 @@ impl<Number> Lexer<'_, Number> {
         self.source.next()
     }
 
-    fn report_span(&self) -> Span {
-        self.start_index..self.end_index
-    }
+    fn report_span(&self) -> Span { self.start_index..self.end_index }
 }
 
 struct Peeking<Inner, Item> {
@@ -347,7 +380,10 @@ impl<Inner: Iterator<Item = Item>, Item: Clone> Peeking<Inner, Item> {
     }
 
     fn from_iter(inner: Inner) -> Self {
-        Self { inner, peeked: None }
+        Self {
+            inner,
+            peeked: None,
+        }
     }
 }
 
@@ -363,12 +399,10 @@ impl<Inner: Iterator<Item = Item>, Item> Iterator for Peeking<Inner, Item> {
     }
 }
 
-impl<Inner: Iterator<Item = Item>, Item> std::ops::Deref for Peeking<Inner, Item> {
+impl<Inner: Iterator<Item = Item>, Item> core::ops::Deref for Peeking<Inner, Item> {
     type Target = Inner;
 
-    fn deref(&self) -> &Inner {
-        &self.inner
-    }
+    fn deref(&self) -> &Inner { &self.inner }
 }
 
 #[cfg(test)]
