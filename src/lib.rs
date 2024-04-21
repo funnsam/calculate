@@ -87,9 +87,10 @@ fn parse_expr_climb<T: Clone + Numeral>(
 }
 
 fn add_node_right<T: Clone>(rest: &mut Node<T>, op: BiOpr, right: Node<T>) {
+    let rse = right.span.end;
+
     match &mut rest.kind {
-        NodeKind::BiOp(_, _, r) => {
-            rest.span.end = right.span.end;
+        NodeKind::BiOp(_, op2, r) if op == *op2 => {
             add_node_right(r, op, right);
         },
         _ => {
@@ -99,6 +100,8 @@ fn add_node_right<T: Clone>(rest: &mut Node<T>, op: BiOpr, right: Node<T>) {
             };
         },
     }
+
+    rest.span.end = rse;
 }
 
 fn parse_single<T: Clone + Numeral>(lex: &mut PeekingLexer<'_, T>) -> Result<Node<T>, Span> {
@@ -157,7 +160,7 @@ enum OperatorRaw {
     Power,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BiOpr {
     Add,
     Subtract,
@@ -166,7 +169,7 @@ pub enum BiOpr {
     Power,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum UnOpr {
     Plus,
     Minus,
