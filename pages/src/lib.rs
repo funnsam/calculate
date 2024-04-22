@@ -1,4 +1,4 @@
-use calculate::{*, traits::*};
+use calculate::{traits::*, *};
 use num_bigint::BigInt;
 use num_rational::BigRational;
 use num_traits::*;
@@ -73,9 +73,7 @@ impl std::str::FromStr for Rat {
 }
 
 impl FromConstant for Rat {
-    fn from_constant(c: char) -> Option<Self> {
-        None
-    }
+    fn from_constant(c: char) -> Option<Self> { None }
 }
 
 macro_rules! delegate_biop {
@@ -83,9 +81,7 @@ macro_rules! delegate_biop {
         impl $t for Rat {
             type Output = Self;
 
-            fn $f(self, rhs: Self) -> Self {
-                Self(self.0.$f(rhs.0))
-            }
+            fn $f(self, rhs: Self) -> Self { Self(self.0.$f(rhs.0)) }
         }
     };
 }
@@ -99,9 +95,7 @@ delegate_biop!(Rem, rem);
 impl Neg for Rat {
     type Output = Self;
 
-    fn neg(self) -> Self {
-        Self(-self.0)
-    }
+    fn neg(self) -> Self { Self(-self.0) }
 }
 
 impl Num for Rat {
@@ -119,43 +113,35 @@ impl Num for Rat {
 }
 
 impl Zero for Rat {
-    fn zero() -> Self {
-        Self(BigRational::zero())
-    }
+    fn zero() -> Self { Self(BigRational::zero()) }
 
-    fn is_zero(&self) -> bool {
-        self.0.is_zero()
-    }
+    fn is_zero(&self) -> bool { self.0.is_zero() }
 
-    fn set_zero(&mut self) {
-        self.0.set_zero()
-    }
+    fn set_zero(&mut self) { self.0.set_zero() }
 }
 
 impl One for Rat {
-    fn one() -> Self {
-        Self(BigRational::one())
-    }
+    fn one() -> Self { Self(BigRational::one()) }
 
-    fn is_one(&self) -> bool {
-        self.0.is_one()
-    }
+    fn is_one(&self) -> bool { self.0.is_one() }
 
-    fn set_one(&mut self) {
-        self.0.set_one()
-    }
+    fn set_one(&mut self) { self.0.set_one() }
 }
 
-impl Pow::<Self> for Rat {
+impl Pow<Self> for Rat {
     type Output = Self;
 
     fn pow(self, rhs: Self) -> Self {
-        todo!()
+        if rhs.0.is_integer() {
+            return Self(self.0.pow(rhs.0.to_integer()));
+        } else if self.0 == BigRational::from(BigInt::from(1)) {
+            return self;
+        }
+
+        todo!();
     }
 }
 
 impl std::fmt::Display for Rat {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        self.0.fmt(f)
-    }
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result { self.0.fmt(f) }
 }

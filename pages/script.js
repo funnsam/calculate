@@ -6,9 +6,9 @@ const urlp = new URLSearchParams(window.location.search);
 const type = urlp.get("type");
 
 if (type == "f32") {
-	evaluate = (v) => { +evaluate_f32(v).toFixed(5) };
+	evaluate = (v) => { return +evaluate_f32(v).toFixed(5); };
 } else if (type == "f64") {
-	evaluate = (v) => { +evaluate_f64(v).toFixed(5) };
+	evaluate = (v) => { return +evaluate_f64(v).toFixed(5); };
 }
 
 document.addEventListener("DOMContentLoaded", (_) => {
