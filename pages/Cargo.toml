@@ -5,6 +5,9 @@ edition = "2021"
 
 [dependencies]
 calculate = { path = "../" }
+num-bigint = "0.4.4"
+num-rational = "0.4.1"
+num-traits = "0.2.18"
 wasm-bindgen = "0.2.92"
 
 [lib]
