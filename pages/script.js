@@ -14,7 +14,7 @@ if (type == "f32") {
 document.addEventListener("DOMContentLoaded", (_) => {
 	function update() {
 		try {
-			OUTPUT.innerText = `= ${+evaluate(INPUT.value).toFixed(5)}`;
+			OUTPUT.innerText = `= ${evaluate(INPUT.value)}`;
 		} catch (span) {
 			if (span instanceof JsSpan) {
 				OUTPUT.innerText = `Error:\n  ${INPUT.value}\n  ${" ".repeat(span.start)}${"^".repeat(span.end - span.start)}`;
