@@ -22,6 +22,7 @@ jobs:
       - name: Get dependencies
         run: |
           curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+          sudo apt update
           sudo apt install binaryen
       - name: Build bindings
         run: |
