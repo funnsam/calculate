@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 calculate = { path = "../", features = ["num_complex"] }
+float-pretty-print = "0.1.1"
 num-bigint = "0.4.4"
 num-complex = "0.4.5"
 num-rational = "0.4.1"
