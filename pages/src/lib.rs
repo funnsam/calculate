@@ -87,7 +87,16 @@ impl std::str::FromStr for Rat {
 }
 
 impl FromConstant for Rat {
-    fn from_constant(c: char) -> Option<Self> { None }
+    fn from_constant(c: char) -> Option<Self> {
+        match c {
+            'π' => Some(Self(BigRational::new_raw(312689.into(), 99532.into()))),
+            'φ' | 'ϕ' => Some(Self(BigRational::new_raw(121393.into(), 75025.into()))),
+            'e' => Some(Self(BigRational::new_raw(517656.into(), 190435.into()))),
+            'τ' => Some(Self(BigRational::new_raw(312689.into(), 49766.into()))),
+            'γ' => Some(Self(BigRational::new_raw(30316449.into(), 52521875.into()))),
+            _ => None,
+        }
+    }
 }
 
 macro_rules! delegate_biop {
@@ -157,5 +166,7 @@ impl Pow<Self> for Rat {
 }
 
 impl std::fmt::Display for Rat {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result { self.0.fmt(f) }
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        (self.0.numer().to_f64().unwrap() / self.0.denom().to_f64().unwrap()).fmt(f)
+    }
 }
