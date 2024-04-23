@@ -167,6 +167,12 @@ impl Pow<Self> for Rat {
 
 impl std::fmt::Display for Rat {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        (self.0.numer().to_f64().unwrap() / self.0.denom().to_f64().unwrap()).fmt(f)
+        self.0.fmt(f)?;
+
+        if !self.0.is_integer() {
+            write!(f, " ({})", self.0.numer().to_f64().unwrap() / self.0.denom().to_f64().unwrap())?;
+        }
+
+        Ok(())
     }
 }
