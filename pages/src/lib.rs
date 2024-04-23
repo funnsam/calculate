@@ -11,7 +11,7 @@ pub struct JsSpan {
     pub end: usize,
 }
 
-fn evaluate<T: ComputableNumeral + std::string::ToString>(s: &str) -> Result<String, JsSpan> {
+fn evaluate<T: ComputableNumeral + std::string::ToString>(s: &str) -> Result<T, JsSpan> {
     Ok(to_nodes::<T>(s)
         .map_err(|s| JsSpan {
             start: s.start,
@@ -21,38 +21,43 @@ fn evaluate<T: ComputableNumeral + std::string::ToString>(s: &str) -> Result<Str
         .map_err(|s| JsSpan {
             start: s.start,
             end: s.end,
-        })?
-        .to_string())
+        })?)
 }
 
 #[wasm_bindgen]
 pub fn evaluate_f32(s: &str) -> Result<String, JsSpan> {
     evaluate::<f32>(s)
+        .map(|a| format!("{a:.7}"))
 }
 
 #[wasm_bindgen]
 pub fn evaluate_f64(s: &str) -> Result<String, JsSpan> {
     evaluate::<f64>(s)
+        .map(|a| format!("{a:.15}"))
 }
 
 #[wasm_bindgen]
 pub fn evaluate_rational(s: &str) -> Result<String, JsSpan> {
     evaluate::<Rat>(s)
+        .map(|a| a.to_string())
 }
 
 #[wasm_bindgen]
 pub fn evaluate_cmplx_f32(s: &str) -> Result<String, JsSpan> {
     evaluate::<Complex<f32>>(s)
+        .map(|a| format!("{a:.7}"))
 }
 
 #[wasm_bindgen]
 pub fn evaluate_cmplx_f64(s: &str) -> Result<String, JsSpan> {
     evaluate::<Complex<f64>>(s)
+        .map(|a| format!("{a:.15}"))
 }
 
 // #[wasm_bindgen]
 // pub fn evaluate_cmplx_rational(s: &str) -> Result<String, JsSpan> {
 //     evaluate::<Complex<Rat>>(s)
+//         .map(|a| a.to_string())
 // }
 
 use core::ops::*;
