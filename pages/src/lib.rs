@@ -2,6 +2,7 @@ use calculate::{traits::*, *};
 use num_bigint::BigInt;
 use num_rational::BigRational;
 use num_traits::*;
+use num_complex::Complex;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -10,37 +11,8 @@ pub struct JsSpan {
     pub end: usize,
 }
 
-#[wasm_bindgen]
-pub fn evaluate_f32(s: &str) -> Result<f32, JsSpan> {
-    Ok(to_nodes(s)
-        .map_err(|s| JsSpan {
-            start: s.start,
-            end: s.end,
-        })?
-        .evaluate()
-        .map_err(|s| JsSpan {
-            start: s.start,
-            end: s.end,
-        })?)
-}
-
-#[wasm_bindgen]
-pub fn evaluate_f64(s: &str) -> Result<f64, JsSpan> {
-    Ok(to_nodes(s)
-        .map_err(|s| JsSpan {
-            start: s.start,
-            end: s.end,
-        })?
-        .evaluate()
-        .map_err(|s| JsSpan {
-            start: s.start,
-            end: s.end,
-        })?)
-}
-
-#[wasm_bindgen]
-pub fn evaluate_rational(s: &str) -> Result<String, JsSpan> {
-    Ok(to_nodes::<Rat>(s)
+fn evaluate<T: ComputableNumeral + std::string::ToString>(s: &str) -> Result<String, JsSpan> {
+    Ok(to_nodes::<T>(s)
         .map_err(|s| JsSpan {
             start: s.start,
             end: s.end,
@@ -52,6 +24,36 @@ pub fn evaluate_rational(s: &str) -> Result<String, JsSpan> {
         })?
         .to_string())
 }
+
+#[wasm_bindgen]
+pub fn evaluate_f32(s: &str) -> Result<String, JsSpan> {
+    evaluate::<f32>(s)
+}
+
+#[wasm_bindgen]
+pub fn evaluate_f64(s: &str) -> Result<String, JsSpan> {
+    evaluate::<f64>(s)
+}
+
+#[wasm_bindgen]
+pub fn evaluate_rational(s: &str) -> Result<String, JsSpan> {
+    evaluate::<Rat>(s)
+}
+
+#[wasm_bindgen]
+pub fn evaluate_cmplx_f32(s: &str) -> Result<String, JsSpan> {
+    evaluate::<Complex<f32>>(s)
+}
+
+#[wasm_bindgen]
+pub fn evaluate_cmplx_f64(s: &str) -> Result<String, JsSpan> {
+    evaluate::<Complex<f64>>(s)
+}
+
+// #[wasm_bindgen]
+// pub fn evaluate_cmplx_rational(s: &str) -> Result<String, JsSpan> {
+//     evaluate::<Complex<Rat>>(s)
+// }
 
 use core::ops::*;
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]

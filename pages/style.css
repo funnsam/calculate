@@ -27,12 +27,19 @@ body {
 	padding: var(--margin-l);
 }
 
+* {
+	font-family: "Source Code Pro", monospace;
+}
+
+body > * {
+	font-size: 18pt;
+}
+
 input {
 	border: none;
 	border-bottom: var(--margin-xs) solid var(--color-normal);
 	background-color: var(--color-normal-dim);
 	color: var(--color-normal);
-	font: 18pt "Source Code Pro", monospace;
 	width: 100%;
 
 	transition: 0.25s;
@@ -52,4 +59,17 @@ pre {
 	width: 100%;
 	overflow: auto;
 	font: 18pt "Source Code Pro", monospace;
+}
+
+body > details > summary {
+	font-size: 16pt;
+}
+
+body > details > div {
+	padding-left: var(--margin-s);
+	padding-right: var(--margin-s);
+}
+
+body > details > div * {
+	font-size: 14pt;
 }

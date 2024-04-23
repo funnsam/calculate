@@ -1,22 +1,24 @@
-import init, { evaluate_f32, evaluate_f64, evaluate_rational, JsSpan } from "./pkg/bindings.js";
+import init, * as bindings from "./pkg/bindings.js";
+
+const EVALUATES = {
+	f32: bindings.evaluate_f32,
+	f64: bindings.evaluate_f64,
+	cmplx_f32: bindings.evaluate_cmplx_f32,
+	cmplx_f64: bindings.evaluate_cmplx_f64,
+	cmplx: bindings.evaluate_cmplx_rational,
+};
 
 document.addEventListener("DOMContentLoaded", (_) => {
 	function update() {
-		let evaluate = evaluate_rational;
-
-		const type = window.location.hash.slice(1);
-		if (type == "f32") {
-			evaluate = (v) => { return +evaluate_f32(v).toFixed(5); };
-		} else if (type == "f64") {
-			evaluate = (v) => { return +evaluate_f64(v).toFixed(5); };
-		} else {
-			evaluate = evaluate_rational;
+		let evaluate = EVALUATES[window.location.hash.slice(1)];
+		if (evaluate === undefined) {
+			evaluate = bindings.evaluate_rational;
 		}
 
 		try {
 			OUTPUT.innerText = `= ${evaluate(INPUT.value)}`;
 		} catch (span) {
-			if (span instanceof JsSpan) {
+			if (span instanceof bindings.JsSpan) {
 				OUTPUT.innerText = `Error:\n  ${INPUT.value}\n  ${" ".repeat(span.start)}${"^".repeat(span.end - span.start)}`;
 			} else {
 				throw span;
@@ -30,4 +32,10 @@ document.addEventListener("DOMContentLoaded", (_) => {
 	init().then(update);
 	INPUT.oninput = (_) => { update(); };
 	window.onhashchange = update;
+
+	const SELECTOR = document.getElementById("type_selector");
+	SELECTOR.value = window.location.hash;
+	SELECTOR.onchange = (_) => {
+		window.location.hash = SELECTOR.value;
+	};
 });

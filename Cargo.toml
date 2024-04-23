@@ -7,9 +7,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-num-traits = { version = "0.2.18", optional = true }
+num-complex = { version = "0.4.5", optional = true }
+num-traits = { version = "0.2.18", no-default-features = true, optional = true }
 
 [features]
 default = ["any_num", "std"]
 any_num = ["dep:num-traits"]
+num_complex = ["dep:num-complex"]
 std = []

@@ -14,6 +14,7 @@ version = "0.1.0"
 dependencies = [
  "calculate",
  "num-bigint",
+ "num-complex",
  "num-rational",
  "num-traits",
  "wasm-bindgen",
@@ -29,6 +30,7 @@ checksum = "79296716171880943b8470b5f8d03aa55eb2e645a4874bdbb28adb49162e012c"
 name = "calculate"
 version = "0.1.0"
 dependencies = [
+ "num-complex",
  "num-traits",
 ]
 
@@ -52,6 +54,15 @@ checksum = "608e7659b5c3d7cba262d894801b9ec9d00de989e8a82bd4bef91d08da45cdc0"
 dependencies = [
  "autocfg",
  "num-integer",
+ "num-traits",
+]
+
+[[package]]
+name = "num-complex"
+version = "0.4.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "23c6602fda94a57c990fe0df199a035d83576b496aa29f4e634a8ac6004e68a6"
+dependencies = [
  "num-traits",
 ]
 
