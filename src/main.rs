@@ -2,7 +2,7 @@ fn main() {
     let arg = std::env::args().skip(1).collect::<Vec<String>>().join(" ");
 
     #[cfg(feature = "any_num")]
-    let n = calculate::to_nodes::<f64>(&arg);
+    let n = calculate::to_nodes::<f64>(&arg).and_then(|n| n.evaluate());
 
     #[cfg(not(feature = "any_num"))]
     let n = calculate::to_nodes::<f32>(&arg);
@@ -20,7 +20,7 @@ fn main() {
             );
         },
         |n| {
-            println!("\x1b[1m=\x1b[0m {}", n.evaluate());
+            println!("\x1b[1m=\x1b[0m {n}");
         },
     );
 }

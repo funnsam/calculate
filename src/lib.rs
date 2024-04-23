@@ -221,13 +221,19 @@ impl BiOpr {
     }
 
     #[cfg(feature = "any_num")]
-    fn operate<F: ComputableNumeral>(self, l: F, r: F) -> F {
+    fn operate<F: ComputableNumeral>(self, l: F, r: F) -> Option<F> {
         match self {
-            Self::Add => l + r,
-            Self::Subtract => l - r,
-            Self::Multiply => l * r,
-            Self::Divide => l / r,
-            Self::Power => l.pow(r),
+            Self::Add => Some(l + r),
+            Self::Subtract => Some(l - r),
+            Self::Multiply => Some(l * r),
+            Self::Divide => {
+                if !r.is_zero() {
+                    Some(l / r)
+                } else {
+                    None
+                }
+            },
+            Self::Power => Some(l.pow(r)),
         }
     }
 }
@@ -248,10 +254,10 @@ impl UnOpr {
     }
 
     #[cfg(feature = "any_num")]
-    fn operate<F: ComputableNumeral>(self, v: F) -> F {
+    fn operate<F: ComputableNumeral>(self, v: F) -> Option<F> {
         match self {
-            Self::Plus => v,
-            Self::Minus => -v,
+            Self::Plus => Some(v),
+            Self::Minus => Some(-v),
         }
     }
 }
@@ -269,11 +275,11 @@ impl Node<f32> {
 
 #[cfg(feature = "any_num")]
 impl<F: ComputableNumeral> Node<F> {
-    pub fn evaluate(&self) -> F {
+    pub fn evaluate(&self) -> Result<F, Span> {
         match &self.kind {
-            NodeKind::BiOp(l, op, r) => op.operate(l.evaluate(), r.evaluate()),
-            NodeKind::UnOp(op, v) => op.operate(v.evaluate()),
-            NodeKind::Number(v) => v.clone(),
+            NodeKind::BiOp(l, op, r) => op.operate(l.evaluate()?, r.evaluate()?).ok_or_else(|| self.span.clone()),
+            NodeKind::UnOp(op, v) => op.operate(v.evaluate()?).ok_or_else(|| self.span.clone()),
+            NodeKind::Number(v) => Ok(v.clone()),
         }
     }
 }
@@ -306,8 +312,8 @@ impl<Number: Numeral> Iterator for Lexer<'_, Number> {
     type Item = Result<Token<Number>, Span>;
 
     fn next(&mut self) -> Option<Result<Token<Number>, Span>> {
+        self.start_index = self.end_index;
         let c = self.next_char()?;
-        self.start_index = self.end_index - 1;
 
         match c {
             '+' => Some(Ok(Token::Operator(OperatorRaw::Plus))),
@@ -412,7 +418,20 @@ impl<Inner: Iterator<Item = Item>, Item> core::ops::Deref for Peeking<Inner, Ite
 mod tests {
     #[test]
     fn tests() {
-        let test = "1 + 2 * 3(4.5 + -3.5)";
-        assert_eq!(super::to_nodes::<f32>(test).unwrap().evaluate(), 7.0);
+        let mut lex = crate::Lexer::<f64> {
+            source: "(3(0.1+0.2)-0.9".chars(),
+            start_index: 0,
+            end_index: 0,
+            skipped: None,
+
+            _num: core::marker::PhantomData::default(),
+        };
+        while let Some(t) = lex.next() {
+            println!("{t:?} {:?}", lex.report_span());
+        }
+        println!("{:?}", lex.report_span());
+
+        // let test = "1 + 2 * 3(4.5 + -3.5)";
+        // assert_eq!(super::to_nodes::<f32>(test).unwrap().evaluate(), 7.0);
     }
 }

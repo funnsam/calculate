@@ -17,7 +17,12 @@ pub fn evaluate_f32(s: &str) -> Result<f32, JsSpan> {
             start: s.start,
             end: s.end,
         })?
-        .evaluate())
+        .evaluate()
+        .map_err(|s| JsSpan {
+            start: s.start,
+            end: s.end,
+        })?
+    )
 }
 
 #[wasm_bindgen]
@@ -27,7 +32,12 @@ pub fn evaluate_f64(s: &str) -> Result<f64, JsSpan> {
             start: s.start,
             end: s.end,
         })?
-        .evaluate())
+        .evaluate()
+        .map_err(|s| JsSpan {
+            start: s.start,
+            end: s.end,
+        })?
+    )
 }
 
 #[wasm_bindgen]
@@ -38,6 +48,10 @@ pub fn evaluate_rational(s: &str) -> Result<String, JsSpan> {
             end: s.end,
         })?
         .evaluate()
+        .map_err(|s| JsSpan {
+            start: s.start,
+            end: s.end,
+        })?
         .to_string())
 }
 
