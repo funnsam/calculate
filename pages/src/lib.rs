@@ -4,7 +4,6 @@ use num_rational::BigRational;
 use num_traits::*;
 use num_complex::Complex;
 use wasm_bindgen::prelude::*;
-use float_pretty_print::PrettyPrintFloat;
 
 #[wasm_bindgen]
 pub struct JsSpan {
@@ -28,13 +27,13 @@ fn evaluate<T: ComputableNumeral + std::string::ToString>(s: &str) -> Result<T, 
 #[wasm_bindgen]
 pub fn evaluate_f32(s: &str) -> Result<String, JsSpan> {
     evaluate::<f32>(s)
-        .map(|a| format!("{:.6}", PrettyPrintFloat(a as _)))
+        .map(|a| trunc(&format!("{a:.6}")).to_string())
 }
 
 #[wasm_bindgen]
 pub fn evaluate_f64(s: &str) -> Result<String, JsSpan> {
     evaluate::<f64>(s)
-        .map(|a| format!("{:.15}", PrettyPrintFloat(a)))
+        .map(|a| trunc(&format!("{a:.15}")).to_string())
 }
 
 #[wasm_bindgen]
@@ -46,13 +45,13 @@ pub fn evaluate_rational(s: &str) -> Result<String, JsSpan> {
 #[wasm_bindgen]
 pub fn evaluate_cmplx_f32(s: &str) -> Result<String, JsSpan> {
     evaluate::<Complex<f32>>(s)
-        .map(|a| format!("{:.6}+{:.6}i", PrettyPrintFloat(a.re as _), PrettyPrintFloat(a.im as _)))
+        .map(|a| format!("{}+{}i", trunc(&format!("{:.6}", a.re)), trunc(&format!("{:.6}", a.im))))
 }
 
 #[wasm_bindgen]
 pub fn evaluate_cmplx_f64(s: &str) -> Result<String, JsSpan> {
     evaluate::<Complex<f64>>(s)
-        .map(|a| format!("{:.15}+{:.15}i", PrettyPrintFloat(a.re), PrettyPrintFloat(a.im)))
+        .map(|a| format!("{}+{}i", trunc(&format!("{:.15}", a.re)), trunc(&format!("{:.15}", a.im))))
 }
 
 // #[wasm_bindgen]
@@ -180,5 +179,13 @@ impl std::fmt::Display for Rat {
         }
 
         Ok(())
+    }
+}
+
+fn trunc(s: &str) -> &str {
+    match s.as_bytes().last() {
+        Some(b'0') => trunc(&s[..s.len()-1]),
+        Some(b'.') => &s[..s.len()-1],
+        _ => s,
     }
 }

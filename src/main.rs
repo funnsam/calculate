@@ -20,7 +20,15 @@ fn main() {
             );
         },
         |n| {
-            println!("\x1b[1m=\x1b[0m {n}");
+            println!("\x1b[1m=\x1b[0m {}", trunc(&format!("{n:.15}")));
         },
     );
+}
+
+fn trunc(s: &str) -> &str {
+    match s.as_bytes().last() {
+        Some(b'0') => trunc(&s[..s.len()-1]),
+        Some(b'.') => &s[..s.len()-1],
+        _ => s,
+    }
 }
