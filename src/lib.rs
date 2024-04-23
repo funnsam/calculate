@@ -36,6 +36,7 @@ fn parse_expr_climb<T: Clone + Numeral>(
     percedence: usize,
 ) -> Result<Node<T>, Span> {
     let mut rest = parse_single(lex)?;
+    let mut depth = 0;
 
     loop {
         match lex.peek() {
@@ -60,7 +61,7 @@ fn parse_expr_climb<T: Clone + Numeral>(
                         span: rest_start..rhs_end,
                     };
                 } else {
-                    add_node_right(&mut rest, op, rhs);
+                    add_node_right(&mut rest, depth, op, rhs);
                 }
             },
             Some(Ok(Token::BStart(_) | Token::Number(_)))
@@ -81,17 +82,28 @@ fn parse_expr_climb<T: Clone + Numeral>(
             },
             _ => break,
         }
+
+        depth += 1;
     }
 
     Ok(rest)
 }
 
-fn add_node_right<T: Clone>(rest: &mut Node<T>, op: BiOpr, right: Node<T>) {
+fn add_node_right<T: Clone>(rest: &mut Node<T>, depth: usize, op: BiOpr, right: Node<T>) {
     let rse = right.span.end;
+
+    if depth == 0 {
+        *rest = Node {
+            span: rest.span.start..right.span.end,
+            kind: NodeKind::BiOp(Box::new(rest.clone()), op, Box::new(right)),
+        };
+
+        return;
+    }
 
     match &mut rest.kind {
         NodeKind::BiOp(_, op2, r) if op == *op2 => {
-            add_node_right(r, op, right);
+            add_node_right(r, depth - 1, op, right);
         },
         _ => {
             *rest = Node {
