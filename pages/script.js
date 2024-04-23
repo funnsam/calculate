@@ -1,18 +1,18 @@
 import init, { evaluate_f32, evaluate_f64, evaluate_rational, JsSpan } from "./pkg/bindings.js";
 
-let evaluate = evaluate_rational;
-
-const urlp = new URLSearchParams(window.location.search);
-const type = urlp.get("type");
-
-if (type == "f32") {
-	evaluate = (v) => { return +evaluate_f32(v).toFixed(5); };
-} else if (type == "f64") {
-	evaluate = (v) => { return +evaluate_f64(v).toFixed(5); };
-}
-
 document.addEventListener("DOMContentLoaded", (_) => {
 	function update() {
+		let evaluate = evaluate_rational;
+
+		const type = window.location.hash.slice(1);
+		if (type == "f32") {
+			evaluate = (v) => { return +evaluate_f32(v).toFixed(5); };
+		} else if (type == "f64") {
+			evaluate = (v) => { return +evaluate_f64(v).toFixed(5); };
+		} else {
+			evaluate = evaluate_rational;
+		}
+
 		try {
 			OUTPUT.innerText = `= ${evaluate(INPUT.value)}`;
 		} catch (span) {
@@ -27,6 +27,7 @@ document.addEventListener("DOMContentLoaded", (_) => {
 	const INPUT = document.getElementById("input");
 	const OUTPUT = document.getElementById("result");
 
-	init().then(() => { update(); });
+	init().then(update);
 	INPUT.oninput = (_) => { update(); };
+	window.onhashchange = update;
 });

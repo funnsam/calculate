@@ -15,7 +15,7 @@ pub fn to_nodes<T: Clone + Numeral>(s: &str) -> Result<Node<T>, Span> {
     let lex = Lexer::<T> {
         source: s.chars(),
         start_index: 0,
-        end_index: 0,
+        current_idx: 0,
         skipped: None,
 
         _num: core::marker::PhantomData::default(),
@@ -277,7 +277,9 @@ impl Node<f32> {
 impl<F: ComputableNumeral> Node<F> {
     pub fn evaluate(&self) -> Result<F, Span> {
         match &self.kind {
-            NodeKind::BiOp(l, op, r) => op.operate(l.evaluate()?, r.evaluate()?).ok_or_else(|| self.span.clone()),
+            NodeKind::BiOp(l, op, r) => op
+                .operate(l.evaluate()?, r.evaluate()?)
+                .ok_or_else(|| self.span.clone()),
             NodeKind::UnOp(op, v) => op.operate(v.evaluate()?).ok_or_else(|| self.span.clone()),
             NodeKind::Number(v) => Ok(v.clone()),
         }
@@ -302,7 +304,7 @@ enum BKind {
 struct Lexer<'src, Number> {
     source: core::str::Chars<'src>,
     start_index: usize,
-    end_index: usize,
+    current_idx: usize,
     skipped: Option<char>,
 
     _num: core::marker::PhantomData<Number>,
@@ -312,7 +314,7 @@ impl<Number: Numeral> Iterator for Lexer<'_, Number> {
     type Item = Result<Token<Number>, Span>;
 
     fn next(&mut self) -> Option<Result<Token<Number>, Span>> {
-        self.start_index = self.end_index;
+        self.start_index = self.current_idx;
         let c = self.next_char()?;
 
         match c {
@@ -330,16 +332,14 @@ impl<Number: Numeral> Iterator for Lexer<'_, Number> {
             '0'..='9' | '.' => {
                 let mut acc = c.to_string();
 
-                while let Some(c) = self.next_char() {
+                while let Some(c) = self.peek_char() {
                     if matches!(c, '0'..='9' | '.') {
                         acc.push(c);
+                        self.next_char();
                     } else {
-                        self.skipped = Some(c);
                         break;
                     }
                 }
-
-                self.end_index -= 1;
 
                 Some(
                     acc.parse()
@@ -360,16 +360,28 @@ impl<Number: Numeral> Iterator for Lexer<'_, Number> {
 
 impl<Number> Lexer<'_, Number> {
     fn next_char(&mut self) -> Option<char> {
-        self.end_index += 1;
-
         if self.skipped.is_some() {
+            self.current_idx += 1;
             return core::mem::take(&mut self.skipped);
         }
 
-        self.source.next()
+        self.source.next().map(|a| {
+            self.current_idx += 1;
+            a
+        })
     }
 
-    fn report_span(&self) -> Span { self.start_index..self.end_index }
+    fn peek_char(&mut self) -> Option<char> {
+        if let Some(c) = self.skipped {
+            return Some(c);
+        }
+
+        let c = self.source.next()?;
+        self.skipped = Some(c);
+        Some(c)
+    }
+
+    fn report_span(&self) -> Span { self.start_index..self.current_idx.max(self.start_index + 1) }
 }
 
 struct Peeking<Inner, Item> {
@@ -418,20 +430,24 @@ impl<Inner: Iterator<Item = Item>, Item> core::ops::Deref for Peeking<Inner, Ite
 mod tests {
     #[test]
     fn tests() {
-        let mut lex = crate::Lexer::<f64> {
+        let lex = crate::Lexer::<f64> {
             source: "(3(0.1+0.2)-0.9".chars(),
             start_index: 0,
-            end_index: 0,
+            current_idx: 0,
             skipped: None,
 
             _num: core::marker::PhantomData::default(),
         };
-        while let Some(t) = lex.next() {
-            println!("{t:?} {:?}", lex.report_span());
-        }
-        println!("{:?}", lex.report_span());
+        let mut lex = crate::Peeking::from_iter(lex);
 
-        // let test = "1 + 2 * 3(4.5 + -3.5)";
-        // assert_eq!(super::to_nodes::<f32>(test).unwrap().evaluate(), 7.0);
+        while let Some(t) = lex.next() {
+            // println!("{t:?} {:?} {:?} {:?}", lex.inner.report_span(), lex.peek(),
+            // lex.inner.report_span());
+            println!("{t:?} {:?}", lex.inner.report_span());
+        }
+
+        println!("{:?}", lex.inner.report_span());
+        lex.peek();
+        println!("{:?}", lex.inner.report_span());
     }
 }

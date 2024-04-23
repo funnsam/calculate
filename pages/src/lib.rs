@@ -21,8 +21,7 @@ pub fn evaluate_f32(s: &str) -> Result<f32, JsSpan> {
         .map_err(|s| JsSpan {
             start: s.start,
             end: s.end,
-        })?
-    )
+        })?)
 }
 
 #[wasm_bindgen]
@@ -36,8 +35,7 @@ pub fn evaluate_f64(s: &str) -> Result<f64, JsSpan> {
         .map_err(|s| JsSpan {
             start: s.start,
             end: s.end,
-        })?
-    )
+        })?)
 }
 
 #[wasm_bindgen]
