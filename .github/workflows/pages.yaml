@@ -27,6 +27,7 @@ jobs:
         run: |
           cd pages
           make
+          rm src target Cargo.toml Cargo.lock Makefile -rf
       - name: Upload page
         uses: actions/upload-pages-artifact@v3
         with:
