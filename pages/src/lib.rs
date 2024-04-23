@@ -160,13 +160,25 @@ impl Pow<Self> for Rat {
     type Output = Self;
 
     fn pow(self, rhs: Self) -> Self {
-        if rhs.0.is_integer() {
-            return Self(self.0.pow(rhs.0.to_integer()));
-        } else if self.0 == BigRational::from(BigInt::from(1)) {
-            return self;
+        if rhs.0.is_negative() {
+            return self.pow(Self(rhs.0.inv()));
         }
 
-        todo!();
+        if rhs.0.is_integer() {
+            return Self(self.0.pow(rhs.0.to_integer()));
+        }
+
+        // LIGHT:
+        // |  a  |c    a^c
+        // | --- |  = -----
+        // |  b  |     b^c
+
+        let r = rhs.0.to_f64().unwrap();
+        let mul = 100.0 * r;
+        let numer = ((self.0.numer().to_f64().unwrap().powf(r) * mul) as u64).into();
+        let denom = ((self.0.denom().to_f64().unwrap().powf(r) * mul) as u64).into();
+
+        Self(BigRational::new(numer, denom))
     }
 }
 
