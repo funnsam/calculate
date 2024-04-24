@@ -161,7 +161,7 @@ impl Pow<Self> for Rat {
 
     fn pow(self, rhs: Self) -> Self {
         if rhs.0.is_negative() {
-            return self.pow(Self(rhs.0.inv()));
+            return Self((self.pow(Self(-rhs.0))).0.inv());
         }
 
         if rhs.0.is_integer() {
@@ -174,7 +174,7 @@ impl Pow<Self> for Rat {
         // |  b  |     b^c
 
         let r = rhs.0.to_f64().unwrap();
-        let mul = 100.0 * r;
+        let mul = 1e10 / r;
         let numer = ((self.0.numer().to_f64().unwrap().powf(r) * mul) as u64).into();
         let denom = ((self.0.denom().to_f64().unwrap().powf(r) * mul) as u64).into();
 
