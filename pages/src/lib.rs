@@ -175,8 +175,8 @@ impl Pow<Self> for Rat {
 
         let r = rhs.0.to_f64().unwrap();
         let mul = 1e10 / r;
-        let numer = ((self.0.numer().to_f64().unwrap().powf(r) * mul) as u64).into();
-        let denom = ((self.0.denom().to_f64().unwrap().powf(r) * mul) as u64).into();
+        let numer = ((self.0.numer().to_f64().unwrap().powf(r) * mul).round() as u64).into();
+        let denom = ((self.0.denom().to_f64().unwrap().powf(r) * mul).round() as u64).into();
 
         Self(BigRational::new(numer, denom))
     }
