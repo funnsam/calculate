@@ -40,6 +40,7 @@ impl FromConstant for f32 {
             "e" => Some(core::f32::consts::E),
             "τ" => Some(core::f32::consts::TAU),
             "γ" => Some(0.57721566490153286060),
+            "c_m/s" => Some(299792458.0),
             _ => None,
         }
     }
@@ -53,6 +54,7 @@ impl FromConstant for f64 {
             "e" => Some(core::f64::consts::E),
             "τ" => Some(core::f64::consts::TAU),
             "γ" => Some(0.57721566490153286060),
+            "c_m/s" => Some(299792458.0),
             _ => None,
         }
     }

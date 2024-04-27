@@ -99,6 +99,7 @@ impl FromConstant for Rat {
             "e" => Some(Self(BigRational::new_raw(517656.into(), 190435.into()))),
             "τ" => Some(Self(BigRational::new_raw(312689.into(), 49766.into()))),
             "γ" => Some(Self(BigRational::new_raw(30316449.into(), 52521875.into()))),
+            "c_m/s" => Some(Self(BigRational::new_raw(299792458.into(), 1.into()))),
             _ => None,
         }
     }
