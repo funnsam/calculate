@@ -15,15 +15,8 @@ document.addEventListener("DOMContentLoaded", (_) => {
 			evaluate = bindings.evaluate_rational;
 		}
 
-		try {
-			OUTPUT.innerText = `= ${evaluate(INPUT.value)}`;
-		} catch (span) {
-			if (span instanceof bindings.JsSpan) {
-				OUTPUT.innerText = `Error:\n  ${INPUT.value}\n  ${" ".repeat(span.start)}${"^".repeat(span.end - span.start)}`;
-			} else {
-				throw span;
-			}
-		}
+		// sanitization should be done in rust side
+		OUTPUT.innerHtml = evaluate(INPUT.value);
 	}
 
 	const INPUT = document.getElementById("input");

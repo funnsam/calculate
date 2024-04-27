@@ -1,63 +1,88 @@
 use smolcalc::{*, traits::*};
 use num_bigint::BigInt;
-use num_rational::BigRational;
-use num_traits::*;
 use num_complex::Complex;
 use wasm_bindgen::prelude::*;
 
-#[wasm_bindgen]
-pub struct JsSpan {
-    pub start: usize,
-    pub end: usize,
+fn sanitize(s: &str) -> String {
+    s.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+        .replace('\'', "&#x27;")
+        .replace('/', "&#x2F;")
 }
 
-fn evaluate<T: ComputableNumeral + std::string::ToString>(s: &str) -> Result<T, JsSpan> {
+fn report(src: &str, span: Span) -> String {
+    format!(
+        "\
+<span class=\"error\">Error:</span>\n
+  {}\n
+  <span class=\"report_arrow\"{:<2$}{3:^<4$}</span>\
+",
+        sanitize(src),
+        "",
+        span.start,
+        "",
+        span.end - span.start
+    )
+}
+
+fn evaluate<T: ComputableNumeral>(s: &str) -> Result<T, String> {
     Ok(to_nodes::<T>(s)
-        .map_err(|s| JsSpan {
-            start: s.start,
-            end: s.end,
-        })?
+        .map_err(|span| report(s, span))?
         .evaluate()
-        .map_err(|s| JsSpan {
-            start: s.start,
-            end: s.end,
-        })?)
+        .map_err(|span| report(s, span))?
+    )
 }
 
 #[wasm_bindgen]
-pub fn evaluate_f32(s: &str) -> Result<String, JsSpan> {
+pub fn evaluate_f32(s: &str) -> String {
     evaluate::<f32>(s)
         .map(|a| trunc(&format!("{a:.5}")).to_string())
+        .unwrap_or_else(|s| s)
 }
 
 #[wasm_bindgen]
-pub fn evaluate_f64(s: &str) -> Result<String, JsSpan> {
+pub fn evaluate_f64(s: &str) -> String {
     evaluate::<f64>(s)
         .map(|a| trunc(&format!("{a:.13}")).to_string())
+        .unwrap_or_else(|s| s)
 }
 
 #[wasm_bindgen]
-pub fn evaluate_rational(s: &str) -> Result<String, JsSpan> {
+pub fn evaluate_rational(s: &str) -> String {
     evaluate::<rational::Rational<BigInt>>(s)
         .map(|a| format!("{a:#}"))
+        .unwrap_or_else(|s| s)
 }
 
 #[wasm_bindgen]
-pub fn evaluate_cmplx_f32(s: &str) -> Result<String, JsSpan> {
+pub fn evaluate_cmplx_f32(s: &str) -> String {
     evaluate::<Complex<f32>>(s)
-        .map(|a| format!("{}+{}i", trunc(&format!("{:.5}", a.re)), trunc(&format!("{:.5}", a.im))))
+        .map(|a| pretty_cmplx(a, |a| format!("{a:.13}")))
+        .unwrap_or_else(|s| s)
 }
 
 #[wasm_bindgen]
-pub fn evaluate_cmplx_f64(s: &str) -> Result<String, JsSpan> {
+pub fn evaluate_cmplx_f64(s: &str) -> String {
     evaluate::<Complex<f64>>(s)
-        .map(|a| format!("{}+{}i", trunc(&format!("{:.13}", a.re)), trunc(&format!("{:.13}", a.im))))
+        .map(|a| pretty_cmplx(a, |a| format!("{a:.13}")))
+        .unwrap_or_else(|s| s)
 }
 
 #[wasm_bindgen]
-pub fn evaluate_cmplx_rational(s: &str) -> Result<String, JsSpan> {
+pub fn evaluate_cmplx_rational(s: &str) -> String {
     evaluate::<rational::complex::ComplexRational<BigInt>>(s)
         .map(|a| a.to_string())
+        .unwrap_or_else(|s| s)
+}
+
+fn pretty_cmplx<T: num_traits::Float + num_traits::Signed, F: Fn(T) -> String>(c: Complex<T>, f: F) -> String {
+    if !c.im.is_negative() {
+        format!("{}+{}i", f(c.re), f(c.im))
+    } else {
+        format!("{}-{}i", f(c.re), f(c.im.abs()))
+    }
 }
 
 fn trunc(s: &str) -> &str {
