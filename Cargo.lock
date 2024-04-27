@@ -32,6 +32,8 @@ name = "calculate"
 version = "0.1.0"
 dependencies = [
  "num-complex",
+ "num-integer",
+ "num-rational",
  "num-traits",
 ]
 

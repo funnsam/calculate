@@ -3,6 +3,9 @@ extern crate alloc;
 
 pub mod traits;
 
+#[cfg(feature = "num_rational")]
+pub mod rational;
+
 use alloc::{boxed::Box, string::ToString};
 use traits::*;
 
@@ -172,6 +175,7 @@ enum OperatorRaw {
     Minus,
     Multiply,
     Divide,
+    PercentageSign,
     Power,
 }
 
@@ -181,6 +185,7 @@ pub enum BiOpr {
     Subtract,
     Multiply,
     Divide,
+    Modulo,
     Power,
 }
 
@@ -197,6 +202,7 @@ impl OperatorRaw {
             Self::Minus => Some(BiOpr::Subtract),
             Self::Multiply => Some(BiOpr::Multiply),
             Self::Divide => Some(BiOpr::Divide),
+            Self::PercentageSign => Some(BiOpr::Modulo),
             Self::Power => Some(BiOpr::Power),
         }
     }
@@ -214,7 +220,7 @@ impl BiOpr {
     fn percedence(self) -> usize {
         match self {
             Self::Power => 3,
-            Self::Multiply | Self::Divide => 2,
+            Self::Multiply | Self::Divide | Self::Modulo => 2,
             Self::Add | Self::Subtract => 1,
         }
     }
@@ -228,6 +234,7 @@ impl BiOpr {
             Self::Subtract => l - r,
             Self::Multiply => l * r,
             Self::Divide => l / r,
+            Self::Modulo => l % r,
             #[cfg(feature = "std")]
             Self::Power => l.powf(r),
             #[cfg(not(feature = "std"))]
@@ -248,6 +255,7 @@ impl BiOpr {
                     None
                 }
             },
+            Self::Modulo => Some(l % r),
             Self::Power => Some(l.pow(r)),
         }
     }
@@ -389,67 +397,67 @@ impl<Number: Numeral> Iterator for Lexer<'_, Number> {
 
 fn repl_greeks(s: &str) -> &str {
     match s {
-        "alpha" => "α",
-        "Alpha" => "Α",
-        "beta" => "β",
-        "Beta" => "Β",
-        "gamma" => "γ",
-        "Gamma" => "Γ",
-        "delta" => "δ",
-        "Delta" => "Δ",
-        "epsilon" => "ε",
-        "Epsilon" => "Ε",
-        "zeta" => "ζ",
-        "Zeta" => "Ζ",
-        "eta" => "η",
-        "Eta" => "Η",
-        "theta" => "θ",
-        "Theta" => "Θ",
-        "iota" => "ι",
-        "Iota" => "Ι",
-        "kappa" => "κ",
-        "Kappa" => "Κ",
-        "lambda" => "λ",
-        "Lambda" => "Λ",
-        "mu" => "μ",
-        "Mu" => "Μ",
-        "nu" => "ν",
-        "Nu" => "Ν",
-        "xi" => "ξ",
-        "Xi" => "Ξ",
-        "omicron" => "ο",
-        "Omicron" => "Ο",
-        "pi" => "π",
-        "Pi" => "Π",
-        "rho" => "ρ",
-        "Rho" => "Ρ",
-        "sigma" => "σ",
-        "Sigma" => "Σ",
-        "tau" => "τ",
-        "Tau" => "Τ",
-        "upsilon" => "υ",
-        "Upsilon" => "Υ",
-        "phi" => "φ",
-        "Phi" => "Φ",
-        "chi" => "χ",
-        "Chi" => "Χ",
-        "psi" => "ψ",
-        "Psi" => "Ψ",
-        "omega" => "ω",
-        "Omega" => "Ω",
+        "\\alpha" => "α",
+        "\\Alpha" => "Α",
+        "\\beta" => "β",
+        "\\Beta" => "Β",
+        "\\gamma" => "γ",
+        "\\Gamma" => "Γ",
+        "\\delta" => "δ",
+        "\\Delta" => "Δ",
+        "\\epsilon" => "ε",
+        "\\Epsilon" => "Ε",
+        "\\zeta" => "ζ",
+        "\\Zeta" => "Ζ",
+        "\\eta" => "η",
+        "\\Eta" => "Η",
+        "\\theta" => "θ",
+        "\\Theta" => "Θ",
+        "\\iota" => "ι",
+        "\\Iota" => "Ι",
+        "\\kappa" => "κ",
+        "\\Kappa" => "Κ",
+        "\\lambda" => "λ",
+        "\\Lambda" => "Λ",
+        "\\mu" => "μ",
+        "\\Mu" => "Μ",
+        "\\nu" => "ν",
+        "\\Nu" => "Ν",
+        "\\xi" => "ξ",
+        "\\Xi" => "Ξ",
+        "\\omicron" => "ο",
+        "\\Omicron" => "Ο",
+        "\\pi" => "π",
+        "\\Pi" => "Π",
+        "\\rho" => "ρ",
+        "\\Rho" => "Ρ",
+        "\\sigma" => "σ",
+        "\\Sigma" => "Σ",
+        "\\tau" => "τ",
+        "\\Tau" => "Τ",
+        "\\upsilon" => "υ",
+        "\\Upsilon" => "Υ",
+        "\\phi" => "φ",
+        "\\Phi" => "Φ",
+        "\\chi" => "χ",
+        "\\Chi" => "Χ",
+        "\\psi" => "ψ",
+        "\\Psi" => "Ψ",
+        "\\omega" => "ω",
+        "\\Omega" => "Ω",
 
-        "varpi" => "ϖ",
-        "varphi" => "ϕ",
-        "varkai" => "ϗ",
-        "varsigma" => "ς",
-        "stigma" => "ҁ",
-        "Stigma" => "Ҁ",
-        "digamma" => "ϝ",
-        "Digamma" => "Ϝ",
-        "koppa" => "ϟ",
-        "Koppa" => "Ϟ",
-        "sampi" => "ϡ",
-        "Sampi" => "Ϡ",
+        "\\varpi" => "ϖ",
+        "\\varphi" => "ϕ",
+        "\\varkai" => "ϗ",
+        "\\varsigma" => "ς",
+        "\\stigma" => "ҁ",
+        "\\Stigma" => "Ҁ",
+        "\\digamma" => "ϝ",
+        "\\Digamma" => "Ϝ",
+        "\\koppa" => "ϟ",
+        "\\Koppa" => "Ϟ",
+        "\\sampi" => "ϡ",
+        "\\Sampi" => "Ϡ",
         _ => s,
     }
 }
