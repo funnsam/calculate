@@ -60,9 +60,9 @@ impl FromConstant for f64 {
 
 #[cfg(feature = "num_complex")]
 impl<T: FromConstant + num_traits::Zero + num_traits::One> FromConstant for num_complex::Complex<T> {
-    fn from_constant(c: char) -> Option<Self> {
+    fn from_constant(c: &str) -> Option<Self> {
         match c {
-            'i' => Some(num_complex::Complex::new(T::zero(), T::one())),
+            "i" => Some(num_complex::Complex::new(T::zero(), T::one())),
             _ => Some(num_complex::Complex::new(T::from_constant(c)?, T::zero())),
         }
     }
