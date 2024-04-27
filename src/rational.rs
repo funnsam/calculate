@@ -4,8 +4,8 @@ use num_traits::*;
 use num_rational::*;
 use num_integer::*;
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Rational<T: Clone + Integer>(Ratio<T>);
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Rational<T: Clone + Integer>(pub Ratio<T>);
 
 impl<T: Clone + Integer + From<u8> + AddAssign + MulAssign> core::str::FromStr for Rational<T> {
     type Err = ();
@@ -102,7 +102,7 @@ impl<T: Clone + Integer> One for Rational<T> {
     fn set_one(&mut self) { self.0.set_one() }
 }
 
-impl<T: Clone + Integer + ToPrimitive + Signed + From<u64> + Into<u64> + From<u64> + Pow<u64, Output = T>> Pow<Self> for Rational<T> {
+impl<T: Clone + Integer + ToPrimitive + Signed + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T>> Pow<Self> for Rational<T> {
     type Output = Self;
 
     fn pow(self, rhs: Self) -> Self {
@@ -111,7 +111,7 @@ impl<T: Clone + Integer + ToPrimitive + Signed + From<u64> + Into<u64> + From<u6
         }
 
         if rhs.0.is_integer() {
-            return Self(Ratio::new(self.0.numer().clone().pow(rhs.0.to_integer().into()), self.0.denom().clone().pow(rhs.0.to_integer().into())));
+            return Self(Ratio::new(self.0.numer().clone().pow(rhs.0.to_integer().try_into().ok().unwrap()), self.0.denom().clone().pow(rhs.0.to_integer().try_into().ok().unwrap())));
         }
 
         // LIGHT:
@@ -121,8 +121,8 @@ impl<T: Clone + Integer + ToPrimitive + Signed + From<u64> + Into<u64> + From<u6
 
         let r = rhs.0.numer().to_f64().unwrap() / rhs.0.denom().to_f64().unwrap();
         let mul = 1e10 / r;
-        let numer = ((self.0.numer().to_f64().unwrap().powf(r) * mul).round() as u64).into();
-        let denom = ((self.0.denom().to_f64().unwrap().powf(r) * mul).round() as u64).into();
+        let numer = ((self.0.numer().to_f64().unwrap().powf(r) * mul).round() as u64).try_into().ok().unwrap();
+        let denom = ((self.0.denom().to_f64().unwrap().powf(r) * mul).round() as u64).try_into().ok().unwrap();
 
         Self(Ratio::new(numer, denom))
     }
@@ -130,12 +130,10 @@ impl<T: Clone + Integer + ToPrimitive + Signed + From<u64> + Into<u64> + From<u6
 
 impl<T: Clone + Integer + core::fmt::Display + ToPrimitive> core::fmt::Display for Rational<T> {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "{} / {}", self.0.numer(), self.0.denom())?;
-
-        if !self.0.denom().is_one() {
-            write!(f, " ({})", self.0.numer().to_f64().unwrap() / self.0.denom().to_f64().unwrap())?;
+        if self.0.denom().is_one() {
+            self.0.numer().fmt(f)
+        } else {
+            write!(f, "{} / {} ({})", self.0.numer(), self.0.denom(), self.0.numer().to_f64().unwrap() / self.0.denom().to_f64().unwrap())
         }
-
-        Ok(())
     }
 }
