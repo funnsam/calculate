@@ -30,7 +30,8 @@ jobs:
           make
           rm src target Cargo.toml Cargo.lock Makefile -rf
       - name: Minify website
-        parameters:
+        uses: devatherock/minify-js@v3.0.0
+        with:
           add_suffix: false
       - name: Upload page
         uses: actions/upload-pages-artifact@v3
