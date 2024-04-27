@@ -1,15 +1,9 @@
 [package]
-name = "bindings"
+name = "calculate"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 smolcalc = { path = "../", features = ["num_complex", "num_rational"] }
 num-bigint = "0.4.4"
-num-complex = "0.4.5"
 num-rational = "0.4.1"
-wasm-bindgen = "0.2.92"
-num-traits = "0.2.18"
-
-[lib]
-crate-type = ["cdylib", "rlib"]

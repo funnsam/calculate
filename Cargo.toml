@@ -1,8 +1,8 @@
 [workspace]
-members = ["pages"]
+members = [ "calculate","pages"]
 
 [package]
-name = "calculate"
+name = "smolcalc"
 version = "0.1.0"
 edition = "2021"
 

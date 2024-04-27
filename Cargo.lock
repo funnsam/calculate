@@ -12,12 +12,11 @@ checksum = "f1fdabc7756949593fe60f30ec81974b613357de856987752631dea1e3394c80"
 name = "bindings"
 version = "0.1.0"
 dependencies = [
- "calculate",
- "float-pretty-print",
  "num-bigint",
  "num-complex",
  "num-rational",
  "num-traits",
+ "smolcalc",
  "wasm-bindgen",
 ]
 
@@ -31,10 +30,9 @@ checksum = "79296716171880943b8470b5f8d03aa55eb2e645a4874bdbb28adb49162e012c"
 name = "calculate"
 version = "0.1.0"
 dependencies = [
- "num-complex",
- "num-integer",
+ "num-bigint",
  "num-rational",
- "num-traits",
+ "smolcalc",
 ]
 
 [[package]]
@@ -42,12 +40,6 @@ name = "cfg-if"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
-
-[[package]]
-name = "float-pretty-print"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cae1cdc50a756244008a19d313827537e5e18d55f76779e8d5f9aa00769ca231"
 
 [[package]]
 name = "log"
@@ -127,6 +119,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0fa76aaf39101c457836aec0ce2316dbdc3ab723cdda1c6bd4e6ad4208acaca7"
 dependencies = [
  "proc-macro2",
+]
+
+[[package]]
+name = "smolcalc"
+version = "0.1.0"
+dependencies = [
+ "num-complex",
+ "num-integer",
+ "num-rational",
+ "num-traits",
 ]
 
 [[package]]

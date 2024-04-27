@@ -4,6 +4,9 @@ use num_traits::*;
 use num_rational::*;
 use num_integer::*;
 
+#[cfg(feature = "num_complex")]
+pub mod complex;
+
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Rational<T: Clone + Integer>(pub Ratio<T>);
 
@@ -49,8 +52,8 @@ impl<T: Clone + Integer + From<usize>> FromConstant for Rational<T> {
 }
 
 macro_rules! delegate_biop {
-    ($t: path, $f: ident) => {
-        impl<T: Clone + Integer> $t for Rational<T> {
+    ($base: tt, $t: path, $f: ident) => {
+        impl<T: Clone + Integer> $t for $base<T> {
             type Output = Self;
 
             fn $f(self, rhs: Self) -> Self { Self(self.0.$f(rhs.0)) }
@@ -58,11 +61,13 @@ macro_rules! delegate_biop {
     };
 }
 
-delegate_biop!(Add, add);
-delegate_biop!(Sub, sub);
-delegate_biop!(Mul, mul);
-delegate_biop!(Div, div);
-delegate_biop!(Rem, rem);
+use delegate_biop;
+
+delegate_biop!(Rational, Add, add);
+delegate_biop!(Rational, Sub, sub);
+delegate_biop!(Rational, Mul, mul);
+delegate_biop!(Rational, Div, div);
+delegate_biop!(Rational, Rem, rem);
 
 impl<T: Clone + Integer + Neg<Output = T>> Neg for Rational<T> {
     type Output = Self;
@@ -120,9 +125,8 @@ impl<T: Clone + Integer + ToPrimitive + Signed + TryFrom<u64> + TryInto<u64> + P
         // |  b  |     b^c
 
         let r = rhs.0.numer().to_f64().unwrap() / rhs.0.denom().to_f64().unwrap();
-        let mul = 1e10 / r;
-        let numer = ((self.0.numer().to_f64().unwrap().powf(r) * mul).round() as u64).try_into().ok().unwrap();
-        let denom = ((self.0.denom().to_f64().unwrap().powf(r) * mul).round() as u64).try_into().ok().unwrap();
+        let numer = ((self.0.numer().to_f64().unwrap().powf(r) * 1e10).round() as u64).try_into().ok().unwrap();
+        let denom = ((self.0.denom().to_f64().unwrap().powf(r) * 1e10).round() as u64).try_into().ok().unwrap();
 
         Self(Ratio::new(numer, denom))
     }
@@ -132,8 +136,14 @@ impl<T: Clone + Integer + core::fmt::Display + ToPrimitive> core::fmt::Display f
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         if self.0.denom().is_one() {
             self.0.numer().fmt(f)
-        } else {
+        } else if f.alternate() {
             write!(f, "{} / {} ({})", self.0.numer(), self.0.denom(), self.0.numer().to_f64().unwrap() / self.0.denom().to_f64().unwrap())
+        } else {
+            write!(f, "({} / {})", self.0.numer(), self.0.denom())
         }
     }
+}
+
+fn exp_approx<T: Clone + Integer + ToPrimitive + Signed + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T>>(exp: Ratio<T>) -> Ratio<T> {
+    Rational(Ratio::new_raw(517656.try_into().ok().unwrap(), 190435.try_into().ok().unwrap())).pow(Rational(exp)).0
 }
