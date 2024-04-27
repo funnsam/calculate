@@ -29,30 +29,30 @@ pub trait FromConstant
 where
     Self: Sized,
 {
-    fn from_constant(_c: char) -> Option<Self> { None }
+    fn from_constant(_c: &str) -> Option<Self> { None }
 }
 
 impl FromConstant for f32 {
-    fn from_constant(c: char) -> Option<Self> {
+    fn from_constant(c: &str) -> Option<Self> {
         match c {
-            'π' => Some(core::f32::consts::PI),
-            'φ' | 'ϕ' => Some(1.61803398874989484820),
-            'e' => Some(core::f32::consts::E),
-            'τ' => Some(core::f32::consts::TAU),
-            'γ' => Some(0.57721566490153286060),
+            "π" => Some(core::f32::consts::PI),
+            "φ" | "ϕ" => Some(1.61803398874989484820),
+            "e" => Some(core::f32::consts::E),
+            "τ" => Some(core::f32::consts::TAU),
+            "γ" => Some(0.57721566490153286060),
             _ => None,
         }
     }
 }
 
 impl FromConstant for f64 {
-    fn from_constant(c: char) -> Option<Self> {
+    fn from_constant(c: &str) -> Option<Self> {
         match c {
-            'π' => Some(core::f64::consts::PI),
-            'φ' | 'ϕ' => Some(1.61803398874989484820),
-            'e' => Some(core::f64::consts::E),
-            'τ' => Some(core::f64::consts::TAU),
-            'γ' => Some(0.57721566490153286060),
+            "π" => Some(core::f64::consts::PI),
+            "φ" | "ϕ" => Some(1.61803398874989484820),
+            "e" => Some(core::f64::consts::E),
+            "τ" => Some(core::f64::consts::TAU),
+            "γ" => Some(0.57721566490153286060),
             _ => None,
         }
     }

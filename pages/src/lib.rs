@@ -92,13 +92,13 @@ impl std::str::FromStr for Rat {
 }
 
 impl FromConstant for Rat {
-    fn from_constant(c: char) -> Option<Self> {
+    fn from_constant(c: &str) -> Option<Self> {
         match c {
-            'π' => Some(Self(BigRational::new_raw(312689.into(), 99532.into()))),
-            'φ' | 'ϕ' => Some(Self(BigRational::new_raw(121393.into(), 75025.into()))),
-            'e' => Some(Self(BigRational::new_raw(517656.into(), 190435.into()))),
-            'τ' => Some(Self(BigRational::new_raw(312689.into(), 49766.into()))),
-            'γ' => Some(Self(BigRational::new_raw(30316449.into(), 52521875.into()))),
+            "π" => Some(Self(BigRational::new_raw(312689.into(), 99532.into()))),
+            "φ" | "ϕ" => Some(Self(BigRational::new_raw(121393.into(), 75025.into()))),
+            "e" => Some(Self(BigRational::new_raw(517656.into(), 190435.into()))),
+            "τ" => Some(Self(BigRational::new_raw(312689.into(), 49766.into()))),
+            "γ" => Some(Self(BigRational::new_raw(30316449.into(), 52521875.into()))),
             _ => None,
         }
     }
