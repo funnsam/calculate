@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", (_) => {
 		}
 
 		// sanitization should be done in rust side
-		OUTPUT.innerHtml = evaluate(INPUT.value);
+		OUTPUT.innerHTML = evaluate(INPUT.value);
 	}
 
 	const INPUT = document.getElementById("input");
