@@ -36,9 +36,9 @@ impl<T: Clone + Integer + From<usize>> FromConstant for ComplexRational<T> {
         match c {
             "π" => Some(Self(Complex::new(Ratio::new_raw(312689.into(), 99532.into()), Ratio::zero()))),
             "φ" | "ϕ" => Some(Self(Complex::new(Ratio::new_raw(121393.into(), 75025.into()), Ratio::zero()))),
-            "e" => Some(Self(Complex::new(Ratio::new_raw(517656.into(), 190435.into()), Ratio::zero()))),  
-            "τ" => Some(Self(Complex::new(Ratio::new_raw(312689.into(), 49766.into()), Ratio::zero()))),  
-            "γ" => Some(Self(Complex::new(Ratio::new_raw(30316449.into(), 52521875.into()), Ratio::zero()))),  
+            "e" => Some(Self(Complex::new(Ratio::new_raw(517656.into(), 190435.into()), Ratio::zero()))),
+            "τ" => Some(Self(Complex::new(Ratio::new_raw(312689.into(), 49766.into()), Ratio::zero()))),
+            "γ" => Some(Self(Complex::new(Ratio::new_raw(30316449.into(), 52521875.into()), Ratio::zero()))),
             "c_m/s" => Some(Self(Complex::new(Ratio::new_raw(299792458.into(), 1.into()), Ratio::zero()))),
             "i" => Some(Self(Complex::new(Ratio::zero(), Ratio::one()))),
             _ => None,
@@ -90,7 +90,7 @@ impl<T: Clone + Integer> One for ComplexRational<T> {
     fn set_one(&mut self) { self.0.set_one() }
 }
 
-impl<T: std::fmt::Debug+ Clone + Integer + Zero + ToPrimitive + Signed + From<isize> + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T>> Pow<Self> for ComplexRational<T> {
+impl<T: std::fmt::Debug+ Clone + Integer + Zero + ToPrimitive + Signed + From<i64> + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T>> Pow<Self> for ComplexRational<T> {
     type Output = Self;
 
     fn pow(self, exp: Self) -> Self {
@@ -102,34 +102,31 @@ impl<T: std::fmt::Debug+ Clone + Integer + Zero + ToPrimitive + Signed + From<is
     }
 }
 
-impl<T:std::fmt::Debug+ Clone + Integer + Zero + ToPrimitive + Signed + From<isize> + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T>> ComplexRational<T> {
+impl<T:std::fmt::Debug+ Clone + Integer + Zero + ToPrimitive + Signed + From<i64> + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T>> ComplexRational<T> {
     pub fn exp(self) -> Self {
         let Complex { re, im } = self.0;
         Self::from_polar(exp_approx(re), im)
     }
 
     pub fn from_polar(r: Ratio<T>, t: Ratio<T>) -> Self {
-        let t = t.numer().to_f64().unwrap() / t.denom().to_f64().unwrap();
-        let cos = Ratio::new(((t.cos() * 1e10).round() as isize).into(), (1e10 as isize).into());
-        let sin = Ratio::new(((t.sin() * 1e10).round() as isize).into(), (1e10 as isize).into());
+        let (sin, cos) = to_f64!(t).sin_cos();
+        let sin = from_f64!(sin);
+        let cos = from_f64!(cos);
 
         Self(Complex::new(r.clone() * cos, r * sin))
     }
 
     pub fn to_polar(self) -> (Ratio<T>, Ratio<T>) {
-        let re = self.0.re.numer().to_f64().unwrap() / self.0.re.denom().to_f64().unwrap();
-        let im = self.0.im.numer().to_f64().unwrap() / self.0.im.denom().to_f64().unwrap();
-        let atan = (im / re).atan();
-        let atan = Ratio::new(((atan * 1e10).round() as isize).into(), (1e10 as isize).into());
+        let re = to_f64!(self.0.re);
+        let im = to_f64!(self.0.im);
+        let atan = from_f64!((im / re).atan());
 
         (Rational(self.0.re.clone() * self.0.re + self.0.im.clone() * self.0.im).pow(Rational(Ratio::new_raw(1.into(), 2.into()))).0, atan)
     }
 
     pub fn ln(self) -> Self {
         let (r, t) = self.to_polar();
-        let r = r.numer().to_f64().unwrap() / r.denom().to_f64().unwrap();
-        let ln = Ratio::new(((r.ln() * 1e10).round() as isize).into(), (1e10 as isize).into());
-        Self(Complex::new(ln, t))
+        Self(Complex::new(from_f64!(to_f64!(r).ln()), t))
     }
 }
 

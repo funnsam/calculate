@@ -4,6 +4,19 @@ use num_traits::*;
 use num_rational::*;
 use num_integer::*;
 
+macro_rules! to_f64 {
+    ($f: expr) => {{
+        $f.numer().to_f64().unwrap() / $f.denom().to_f64().unwrap()
+    }};
+}
+
+macro_rules! from_f64 {
+    ($f: expr) => {{
+        let f = $f;
+        Ratio::new(((f * 1e10).round() as i64).into(), (1e10 as i64).into())
+    }};
+}
+
 #[cfg(feature = "num_complex")]
 pub mod complex;
 
@@ -148,7 +161,7 @@ fn exp_approx<T: Clone + Integer + ToPrimitive + Signed + TryFrom<u64> + TryInto
     Rational(Ratio::new_raw(517656.try_into().ok().unwrap(), 190435.try_into().ok().unwrap())).pow(Rational(exp)).0
 }
 
-impl<T: Clone + Integer + ToPrimitive + Signed + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T>> ExecuteFunction for Rational<T> {
+impl<T: Clone + Integer + ToPrimitive + Signed + From<i64> + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T>> ExecuteFunction for Rational<T> {
     fn execute(f: &str, args: &[Self]) -> Result<Self, ()> {
         match (f, args.len()) {
             ("floor", 1) => Ok(Self(args[0].0.floor())),
@@ -158,9 +171,24 @@ impl<T: Clone + Integer + ToPrimitive + Signed + TryFrom<u64> + TryInto<u64> + P
             ("fract", 1) => Ok(Self(args[0].0.fract())),
             ("abs", 1) => Ok(Self(args[0].0.abs())),
             ("sqrt" | "√", 1) => Ok(args[0].clone().pow(Self(Ratio::new(T::one(), T::one() + T::one())))),
+            ("ln", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).ln()))),
+            ("log", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).log10()))),
+            ("log", 2) => Ok(Self(from_f64!(to_f64!(args[0].0).log(to_f64!(args[0].0))))),
             ("min", _) => Ok(Self(args.iter().map(|a| a.0.clone()).min().ok_or(())?)),
             ("max", _) => Ok(Self(args.iter().map(|a| a.0.clone()).max().ok_or(())?)),
             ("cbrt" | "∛", 1) => Ok(args[0].clone().pow(Self(Ratio::new(T::one(), T::one() + T::one() + T::one())))),
+            ("sin", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).sin()))),
+            ("cos", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).cos()))),
+            ("tan", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).tan()))),
+            ("asin", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).asin()))),
+            ("acos", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).acos()))),
+            ("atan", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).atan()))),
+            ("sinh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).sinh()))),
+            ("cosh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).cosh()))),
+            ("tanh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).tanh()))),
+            ("asinh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).asinh()))),
+            ("acosh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).acosh()))),
+            ("atanh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).atanh()))),
             _ => Err(()),
         }
     }
