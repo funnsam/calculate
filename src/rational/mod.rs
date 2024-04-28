@@ -20,7 +20,7 @@ macro_rules! from_f64 {
 #[cfg(feature = "num_complex")]
 pub mod complex;
 
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Rational<T: Clone + Integer>(pub Ratio<T>);
 
 impl<T: Clone + Integer + From<u8> + AddAssign + MulAssign> core::str::FromStr for Rational<T> {
@@ -120,28 +120,47 @@ impl<T: Clone + Integer> One for Rational<T> {
     fn set_one(&mut self) { self.0.set_one() }
 }
 
-impl<T: Clone + Integer + ToPrimitive + Signed + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T>> Pow<Self> for Rational<T> {
+impl<T:std::fmt::Debug+ Clone + Integer + ToPrimitive + Signed + From<i64> + TryInto<u64> + Pow<u64, Output = T>> Pow<Self> for Rational<T> {
     type Output = Self;
 
-    fn pow(self, rhs: Self) -> Self {
-        if rhs.0.is_negative() {
-            return Self((self.pow(Self(-rhs.0))).0.inv());
+    fn pow(self, exp: Self) -> Self {
+        if exp.0.is_negative() {
+            return Self((self.pow(Self(-exp.0))).0.inv());
         }
 
-        if rhs.0.is_integer() {
-            return Self(Ratio::new(self.0.numer().clone().pow(rhs.0.to_integer().try_into().ok().unwrap()), self.0.denom().clone().pow(rhs.0.to_integer().try_into().ok().unwrap())));
+        if exp.is_zero() {
+            return Self::one();
         }
 
-        // LIGHT:
-        // |  a  |c    a^c
-        // | --- |  = -----
-        // |  b  |     b^c
+        if exp.0.is_integer() {
+            return Self(Ratio::new(self.0.numer().clone().pow(exp.0.to_integer().to_u64().unwrap()), self.0.denom().clone().pow(exp.0.to_integer().to_u64().unwrap())));
+        }
 
-        let r = rhs.0.numer().to_f64().unwrap() / rhs.0.denom().to_f64().unwrap();
-        let numer = ((self.0.numer().to_f64().unwrap().powf(r) * 1e10).round() as u64).try_into().ok().unwrap();
-        let denom = ((self.0.denom().to_f64().unwrap().powf(r) * 1e10).round() as u64).try_into().ok().unwrap();
+        // // LIGHT:
+        // // |  a  |c    a^c
+        // // | --- |  = -----
+        // // |  b  |     b^c
 
-        Self(Ratio::new(numer, denom))
+        // let r = to_f64!(rhs.0);
+        // let numer = ((self.0.numer().to_f64().unwrap().powf(r) * 1e10).round() as u64).try_into().ok().unwrap();
+        // let denom = ((self.0.denom().to_f64().unwrap().powf(r) * 1e10).round() as u64).try_into().ok().unwrap();
+
+        // Self(Ratio::new(numer, denom))
+
+        panic!("{:?}", self.ln());
+
+        // (exp * self.ln()).exp()
+    }
+}
+
+impl<T: Clone + Integer + From<i64> + TryInto<u64> + Pow<u64, Output = T>> Rational<T> {
+    pub fn ln(mut self) -> Self {
+        let p = (Ratio::new(41904491.into(), 43538251.into()) * ((self.0.clone() - Ratio::one()) / (self.0.clone() + Ratio::one()))).round().numer().clone();
+        self.0 = self.0 * T::from(10);
+        let pp = p.clone().try_into().ok().unwrap();
+        let smol_ln = Ratio::new(self.0.numer().clone().pow(pp.clone()), self.0.denom().clone().pow(pp)) - Ratio::one();
+
+        Self(smol_ln + Ratio::new_raw(53443.into(), 23210.into()) * p)
     }
 }
 
@@ -157,11 +176,11 @@ impl<T: Clone + Integer + core::fmt::Display + ToPrimitive> core::fmt::Display f
     }
 }
 
-fn exp_approx<T: Clone + Integer + ToPrimitive + Signed + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T>>(exp: Ratio<T>) -> Ratio<T> {
-    Rational(Ratio::new_raw(517656.try_into().ok().unwrap(), 190435.try_into().ok().unwrap())).pow(Rational(exp)).0
-}
+// fn exp_approx<T: Clone + Integer + ToPrimitive + Signed + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T>>(exp: Ratio<T>) -> Ratio<T> {
+//     // Rational(Ratio::new_raw(517656.try_into().ok().unwrap(), 190435.try_into().ok().unwrap())).pow(Rational(exp)).0
+// }
 
-impl<T: Clone + Integer + ToPrimitive + Signed + From<i64> + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T>> ExecuteFunction for Rational<T> {
+impl<T:std::fmt::Debug+ Clone + Integer + ToPrimitive + Signed + From<i64> + TryInto<u64> + Pow<u64, Output = T>> ExecuteFunction for Rational<T> {
     fn execute(f: &str, args: &[Self]) -> Result<Self, ()> {
         match (f, args.len()) {
             ("floor", 1) => Ok(Self(args[0].0.floor())),

@@ -1,7 +1,21 @@
 use super::*;
 use num_complex::*;
 
-#[derive(Copy, Clone, PartialEq, Eq)]
+macro_rules! from_f64_cmplx {
+    ($c: expr) => {{
+        let c = &$c;
+        Complex::new(from_f64!(c.re), from_f64!(c.im))
+    }};
+}
+
+macro_rules! to_f64_cmplx {
+    ($c: expr) => {{
+        let c = &$c;
+        Complex::new(to_f64!(c.re), to_f64!(c.im))
+    }};
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct ComplexRational<T: Clone + Integer>(pub Complex<Ratio<T>>);
 
 impl<T: Clone + Integer + From<u8> + AddAssign + MulAssign> core::str::FromStr for ComplexRational<T> {
@@ -90,7 +104,7 @@ impl<T: Clone + Integer> One for ComplexRational<T> {
     fn set_one(&mut self) { self.0.set_one() }
 }
 
-impl<T: std::fmt::Debug+ Clone + Integer + Zero + ToPrimitive + Signed + From<i64> + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T>> Pow<Self> for ComplexRational<T> {
+impl<T: Clone + Integer + Zero + ToPrimitive + Signed + From<i64> + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T>> Pow<Self> for ComplexRational<T> {
     type Output = Self;
 
     fn pow(self, exp: Self) -> Self {
@@ -102,7 +116,7 @@ impl<T: std::fmt::Debug+ Clone + Integer + Zero + ToPrimitive + Signed + From<i6
     }
 }
 
-impl<T:std::fmt::Debug+ Clone + Integer + Zero + ToPrimitive + Signed + From<i64> + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T>> ComplexRational<T> {
+impl<T: Clone + Integer + Zero + ToPrimitive + Signed + From<i64> + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T>> ComplexRational<T> {
     pub fn exp(self) -> Self {
         let Complex { re, im } = self.0;
         Self::from_polar(exp_approx(re), im)
@@ -119,7 +133,7 @@ impl<T:std::fmt::Debug+ Clone + Integer + Zero + ToPrimitive + Signed + From<i64
     pub fn to_polar(self) -> (Ratio<T>, Ratio<T>) {
         let re = to_f64!(self.0.re);
         let im = to_f64!(self.0.im);
-        let atan = from_f64!((im / re).atan());
+        let atan = from_f64!(im.atan2(re));
 
         (Rational(self.0.re.clone() * self.0.re + self.0.im.clone() * self.0.im).pow(Rational(Ratio::new_raw(1.into(), 2.into()))).0, atan)
     }
@@ -136,6 +150,28 @@ impl<T: Clone + Integer + Signed + core::fmt::Display + ToPrimitive> core::fmt::
             write!(f, "{}+{}i", Rational(self.0.re.clone()), Rational(self.0.im.clone()))
         } else {
             write!(f, "{}-{}i", Rational(self.0.re.clone()), Rational(self.0.im.abs().clone()))
+        }
+    }
+}
+
+impl<T: Clone + Integer + Zero + ToPrimitive + Signed + From<i64> + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T>> ExecuteFunction for ComplexRational<T> {
+    fn execute(f: &str, args: &[Self]) -> Result<Self, ()> {
+        match (f, args.len()) {
+            ("conj", 1) => Ok(Self(Complex::new(args[0].0.re.clone(), -args[0].0.im.clone()))),
+            ("ln", 1) => Ok(args[0].clone().ln()),
+            ("sin", 1) => Ok(Self(from_f64_cmplx!(to_f64_cmplx!(args[0].0).sin()))),
+            ("cos", 1) => Ok(Self(from_f64_cmplx!(to_f64_cmplx!(args[0].0).cos()))),
+            ("tan", 1) => Ok(Self(from_f64_cmplx!(to_f64_cmplx!(args[0].0).tan()))),
+            ("asin", 1) => Ok(Self(from_f64_cmplx!(to_f64_cmplx!(args[0].0).asin()))),
+            ("acos", 1) => Ok(Self(from_f64_cmplx!(to_f64_cmplx!(args[0].0).acos()))),
+            ("atan", 1) => Ok(Self(from_f64_cmplx!(to_f64_cmplx!(args[0].0).atan()))),
+            ("sinh", 1) => Ok(Self(from_f64_cmplx!(to_f64_cmplx!(args[0].0).sinh()))),
+            ("cosh", 1) => Ok(Self(from_f64_cmplx!(to_f64_cmplx!(args[0].0).cosh()))),
+            ("tanh", 1) => Ok(Self(from_f64_cmplx!(to_f64_cmplx!(args[0].0).tanh()))),
+            ("asinh", 1) => Ok(Self(from_f64_cmplx!(to_f64_cmplx!(args[0].0).asinh()))),
+            ("acosh", 1) => Ok(Self(from_f64_cmplx!(to_f64_cmplx!(args[0].0).acosh()))),
+            ("atanh", 1) => Ok(Self(from_f64_cmplx!(to_f64_cmplx!(args[0].0).atanh()))),
+            _ => Err(()),
         }
     }
 }
