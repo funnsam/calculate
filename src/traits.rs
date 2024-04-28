@@ -4,6 +4,7 @@ use core::str::FromStr;
 pub trait ComputableNumeral:
     Clone
     + Numeral
+    + ExecuteFunction
     + num_traits::Num
     + core::ops::Neg<Output = Self>
     + num_traits::Pow<Self, Output = Self>
@@ -14,6 +15,7 @@ pub trait ComputableNumeral:
 impl<
         T: Clone
             + Numeral
+            + ExecuteFunction
             + num_traits::Num
             + core::ops::Neg<Output = T>
             + num_traits::Pow<T, Output = T>,
@@ -69,3 +71,69 @@ impl<T: FromConstant + num_traits::Zero + num_traits::One> FromConstant for num_
         }
     }
 }
+
+pub trait ExecuteFunction
+where
+    Self: Sized,
+{
+    fn execute(f: &str, args: &[Self]) -> Result<Self, ()>;
+}
+
+macro_rules! map_fn {
+    ($type: ty: $($n: pat $(= $ac: tt => $map: tt ($($th: tt)*))? $(=> $f: expr)?),* $(,)?) => {
+        impl ExecuteFunction for $type {
+            fn execute(f: &str, args: &[Self]) -> Result<Self, ()> {
+                match (f, args.len()) {
+                    $(
+                        $(($n, $ac) => Ok(Self::$map($(args[$th]),*)),)?
+                        $(($n, _) => $f(args),)?
+                    )*
+                    _ => Err(()),
+                }
+            }
+        }
+    };
+}
+
+macro_rules! map_fns {
+    ($($t: tt)*) => {
+        map_fn!(f32: $($t)*);
+        map_fn!(f64: $($t)*);
+    };
+}
+
+map_fns!(
+    "floor" = 1 => floor(0),
+    "ceil" = 1 => ceil(0),
+    "round" = 1 => round(0),
+    "trunc" = 1 => trunc(0),
+    "fract" = 1 => fract(0),
+    "abs" = 1 => abs(0),
+    "sqrt" | "√" = 1 => sqrt(0),
+    "ln" = 1 => ln(0),
+    "log" = 1 => log10(0),
+    "log" = 2 => log(0 1),
+    "min" => |args: &[_]| if args.len() != 0 {
+        Ok(args.iter().fold(Self::INFINITY, |a, &b| a.min(b)))
+    } else {
+        Err(())
+    },
+    "max" => |args: &[_]| if args.len() != 0 {
+        Ok(args.iter().fold(Self::NEG_INFINITY, |a, &b| a.max(b)))
+    } else {
+        Err(())
+    },
+    "cbrt" | "∛" = 1 => cbrt(0),
+    "sin" = 1 => sin(0),
+    "cos" = 1 => cos(0),
+    "tan" = 1 => tan(0),
+    "asin" = 1 => asin(0),
+    "acos" = 1 => acos(0),
+    "atan" = 1 => atan(0),
+    "sinh" = 1 => sinh(0),
+    "cosh" = 1 => cosh(0),
+    "tanh" = 1 => tanh(0),
+    "asinh" = 1 => asinh(0),
+    "acosh" = 1 => acosh(0),
+    "atanh" = 1 => atanh(0),
+);

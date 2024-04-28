@@ -83,7 +83,7 @@ pub fn evaluate_cmplx_rational(s: &str) -> String {
 }
 
 fn pretty_result(s: String) -> String {
-    format!("<span class=\"equals\">=</span> {}", sanitize(&s))
+    format!("= {}", sanitize(&s))
 }
 
 fn pretty_cmplx<T: num_traits::Float + num_traits::Signed, F: Fn(T) -> String>(c: Complex<T>, f: F) -> String {

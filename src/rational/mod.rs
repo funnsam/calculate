@@ -147,3 +147,21 @@ impl<T: Clone + Integer + core::fmt::Display + ToPrimitive> core::fmt::Display f
 fn exp_approx<T: Clone + Integer + ToPrimitive + Signed + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T>>(exp: Ratio<T>) -> Ratio<T> {
     Rational(Ratio::new_raw(517656.try_into().ok().unwrap(), 190435.try_into().ok().unwrap())).pow(Rational(exp)).0
 }
+
+impl<T: Clone + Integer + ToPrimitive + Signed + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T>> ExecuteFunction for Rational<T> {
+    fn execute(f: &str, args: &[Self]) -> Result<Self, ()> {
+        match (f, args.len()) {
+            ("floor", 1) => Ok(Self(args[0].0.floor())),
+            ("ceil", 1) => Ok(Self(args[0].0.ceil())),
+            ("round", 1) => Ok(Self(args[0].0.round())),
+            ("trunc", 1) => Ok(Self(args[0].0.trunc())),
+            ("fract", 1) => Ok(Self(args[0].0.fract())),
+            ("abs", 1) => Ok(Self(args[0].0.abs())),
+            ("sqrt" | "√", 1) => Ok(args[0].clone().pow(Self(Ratio::new(T::one(), T::one() + T::one())))),
+            ("min", _) => Ok(Self(args.iter().map(|a| a.0.clone()).min().ok_or(())?)),
+            ("max", _) => Ok(Self(args.iter().map(|a| a.0.clone()).max().ok_or(())?)),
+            ("cbrt" | "∛", 1) => Ok(args[0].clone().pow(Self(Ratio::new(T::one(), T::one() + T::one() + T::one())))),
+            _ => Err(()),
+        }
+    }
+}

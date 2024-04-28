@@ -143,6 +143,39 @@ fn parse_single<T: Clone + Numeral>(lex: &mut PeekingLexer<'_, T>) -> Result<Nod
                 Err(lex.report_span())
             }
         },
+        Token::FStart(f, k) => {
+            let sbs = lex.report_span();
+            let mut args = Vec::new();
+
+            while let Some(t) = lex.peek() {
+                match t {
+                    Ok(Token::BEnd(_)) => break,
+                    _ => args.push(parse_expr_climb(lex, 0)?),
+                }
+
+                match lex.peek() {
+                    Some(Ok(Token::BEnd(_))) => break,
+                    Some(Ok(Token::Comma)) => { lex.next(); },
+                    _ => {
+                        lex.next();
+                        return Err(lex.report_span())
+                    },
+                }
+            }
+
+            if let Some(Ok(Token::BEnd(ke))) = lex.next() {
+                if k == ke {
+                    Ok(Node {
+                        kind: NodeKind::Function(f, args),
+                        span: sbs.start..lex.report_span().end,
+                    })
+                } else {
+                    Err(lex.report_span())
+                }
+            } else {
+                Err(lex.report_span())
+            }
+        },
         Token::Operator(op) if op.unary().is_some() => {
             let op_span = lex.report_span();
             let op = op.unary().unwrap();
@@ -168,6 +201,7 @@ pub enum NodeKind<Number> {
     Number(Number),
     BiOp(Box<Node<Number>>, BiOpr, Box<Node<Number>>),
     UnOp(UnOpr, Box<Node<Number>>),
+    Function(String, Vec<Node<Number>>),
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -306,6 +340,14 @@ impl<F: ComputableNumeral> Node<F> {
                 .ok_or_else(|| self.span.clone()),
             NodeKind::UnOp(op, v) => op.operate(v.evaluate()?).ok_or_else(|| self.span.clone()),
             NodeKind::Number(v) => Ok(v.clone()),
+            NodeKind::Function(f, a) => {
+                let mut av = Vec::with_capacity(a.len());
+                for i in a.iter() {
+                    av.push(i.evaluate()?);
+                }
+
+                F::execute(f, &av).map_err(|_| self.span.clone())
+            },
         }
     }
 }
@@ -316,6 +358,8 @@ enum Token<Number> {
     Number(Number),
     BStart(BKind),
     BEnd(BKind),
+    Comma,
+    FStart(String, BKind),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -346,13 +390,11 @@ impl<Number: Numeral> Iterator for Lexer<'_, Number> {
             '-' => Some(Ok(Token::Operator(OperatorRaw::Minus))),
             '*' | '×' => Some(Ok(Token::Operator(OperatorRaw::Multiply))),
             '/' | '÷' => Some(Ok(Token::Operator(OperatorRaw::Divide))),
+            '%' => Some(Ok(Token::Operator(OperatorRaw::PercentageSign))),
             '^' => Some(Ok(Token::Operator(OperatorRaw::Power))),
-            '(' => Some(Ok(Token::BStart(BKind::Round))),
-            '[' => Some(Ok(Token::BStart(BKind::Square))),
-            '{' => Some(Ok(Token::BStart(BKind::Curly))),
-            ')' => Some(Ok(Token::BEnd(BKind::Round))),
-            ']' => Some(Ok(Token::BEnd(BKind::Square))),
-            '}' => Some(Ok(Token::BEnd(BKind::Curly))),
+            ',' => Some(Ok(Token::Comma)),
+            '(' | '[' | '{' => Some(Ok(Token::BStart(btype(c).unwrap()))),
+            ')' | ']' | '}' => Some(Ok(Token::BEnd(btype(c).unwrap()))),
             '0'..='9' | '.' => {
                 let mut acc = c.to_string();
 
@@ -378,12 +420,16 @@ impl<Number: Numeral> Iterator for Lexer<'_, Number> {
                     return Some(Ok(Token::Number(c)));
                 }
 
-                while let Some(c) = self.peek_char() {
+                while let Some(c) = self.next_char() {
                     if c.is_whitespace() {
                         break;
                     }
 
-                    s.push(self.next_char().unwrap());
+                    if matches!(c, '(' | '[' | '{') {
+                        return Some(Ok(Token::FStart(repl_greeks(&s).to_string(), btype(c).unwrap())));
+                    }
+
+                    s.push(c);
 
                     if let Some(c) = Number::from_constant(repl_greeks(&s)) {
                         return Some(Ok(Token::Number(c)));
@@ -393,6 +439,15 @@ impl<Number: Numeral> Iterator for Lexer<'_, Number> {
                 Some(Err(self.report_span()))
             },
         }
+    }
+}
+
+fn btype(c: char) -> Option<BKind> {
+    match c {
+        '(' | ')' => Some(BKind::Round),
+        '[' | ']' => Some(BKind::Square),
+        '{' | '}' => Some(BKind::Curly),
+        _ => None,
     }
 }
 
