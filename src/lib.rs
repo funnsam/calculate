@@ -128,12 +128,13 @@ fn parse_single<T: Clone + Numeral>(lex: &mut PeekingLexer<'_, T>) -> Result<Nod
             span: lex.report_span(),
         }),
         Token::BStart(k) => {
+            let sbs = lex.report_span();
             let inner = parse_expr_climb(lex, 0)?;
             if let Some(Ok(Token::BEnd(ke))) = lex.next() {
                 if k == ke {
                     Ok(Node {
                         kind: inner.kind,
-                        span: inner.span.start..lex.report_span().end,
+                        span: sbs.start..lex.report_span().end,
                     })
                 } else {
                     Err(lex.report_span())

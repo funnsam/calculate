@@ -15,10 +15,9 @@ fn sanitize(s: &str) -> String {
 fn report(src: &str, span: Span) -> String {
     format!(
         "\
-<span class=\"error\">Error:</span>\n
-  {}\n
-  <span class=\"report_arrow\"{:<2$}{3:^<4$}</span>\
-",
+<span class=\"error\">Error:</span>
+  {}
+  <span class=\"report_arrow\">{:<2$}{3:^<4$}</span>",
         sanitize(src),
         "",
         span.start,
