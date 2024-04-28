@@ -82,3 +82,7 @@ body > details > div * {
 .report_arrow {
 	color: #ffc470;
 }
+
+.equals {
+	font-weight: bold;
+}
