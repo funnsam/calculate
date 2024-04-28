@@ -58,7 +58,7 @@ pre {
 #result {
 	width: 100%;
 	overflow: auto;
-	font: 18pt "IBM Plex Pro", monospace;
+	font: 18pt "IBM Plex Mono", monospace;
 }
 
 body > details > summary {
