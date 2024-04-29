@@ -10,7 +10,7 @@ const EVALUATES = {
 
 document.addEventListener("DOMContentLoaded", (_) => {
 	function update() {
-		let evaluate = EVALUATES[window.location.hash.slice(1)];
+		let evaluate = EVALUATES[window.location.hash.slice(1).split("-", 1)[0]];
 		if (evaluate === undefined) {
 			evaluate = bindings.evaluate_rational;
 		}
@@ -22,13 +22,27 @@ document.addEventListener("DOMContentLoaded", (_) => {
 	const INPUT = document.getElementById("input");
 	const OUTPUT = document.getElementById("result");
 
+	let expr = window.location.hash.slice(1).split("-", 2)[1];
+	if (expr !== undefined) {
+		try {
+			INPUT.value = atob(expr);
+		} catch {}
+	}
+
 	init().then(update);
 	INPUT.oninput = (_) => { update(); };
 	window.onhashchange = update;
 
 	const SELECTOR = document.getElementById("type_selector");
-	SELECTOR.value = window.location.hash;
+	SELECTOR.value = window.location.hash.slice(1).split("-", 1)[0];
 	SELECTOR.onchange = (_) => {
 		window.location.hash = SELECTOR.value;
+	};
+
+	const SHARE = document.getElementById("share");
+	const SHARE_URL = document.getElementById("share_url");
+	SHARE.onclick = (_) => {
+		let typ = window.location.hash.slice(1).split("-", 1)[0];
+		SHARE_URL.innerText = `${window.location.protocol}//${window.location.host}${window.location.pathname}#${typ}-${btoa(INPUT.value)}`;
 	};
 });

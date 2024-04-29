@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+# smolcalc = { path = "../", features = ["num_complex", "num_rational"] }
 smolcalc = { path = "../", features = ["num_rational"] }
 num-bigint = "0.4.4"
 num-rational = "0.4.1"
