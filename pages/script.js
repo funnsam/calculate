@@ -33,15 +33,10 @@ document.addEventListener("DOMContentLoaded", (_) => {
 		} catch {}
 	}
 
-	init().then(
-		() => {
-			bindings.enable_panic_hook();
-			update();
-		},
-		() => {
-			alert("Get a real browser kiddo");
-		}
-	);
+	init().then(() => {
+		bindings.enable_panic_hook();
+		update();
+	});
 	INPUT.oninput = (_) => { update(); };
 	window.onhashchange = update;
 
