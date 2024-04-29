@@ -1,14 +1,30 @@
 import math
+from fractions import Fraction
 
-s = 16
-u = 8
+acc = 1e10
+
+s = 4096
+u = 16
 
 def m(x):
     return (x - 1) / (x + 1)
 
+def approx(x):
+    return Fraction(x).limit_denominator(int(acc))
+
+def inv(x):
+    return Fraction(x.denominator, x.numerator)
+
+print("// python3 ln_const_gen.py >> src/rational/ln_const.rs")
+print(f"pub const S: u64 = {s};")
+print(f"pub const U: u64 = {u};")
+print(f"pub const LN_CONSTS: [[u64; 6]; {s}] = [")
+
 for i in range(1, s + 1):
-    b = max(i*i, 1.000001)
-    p_const = 1 / (2 * m(math.sqrt(b)))
-    b_u = b ** (1 / u)
-    ln_b = math.log(b)
-    print(f"{p_const} {b_u} {ln_b}")
+    b = i * i
+    b_a = inv(approx(max(2 * m(i), 1 / acc)))
+    b_b = approx(b ** (1 / u))
+    b_c = approx(math.log(b))
+    print(f"    [{b_a.numerator}, {b_a.denominator}, {b_b.numerator}, {b_b.denominator}, {b_c.numerator}, {b_c.denominator}], // {i}")
+
+print("];")

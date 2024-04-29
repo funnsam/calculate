@@ -4,6 +4,8 @@ use num_traits::*;
 use num_rational::*;
 use num_integer::*;
 
+mod ln_const;
+
 macro_rules! to_f64 {
     ($f: expr) => {{
         $f.numer().to_f64().unwrap() / $f.denom().to_f64().unwrap()
@@ -120,7 +122,8 @@ impl<T: Clone + Integer> One for Rational<T> {
     fn set_one(&mut self) { self.0.set_one() }
 }
 
-impl<T:std::fmt::Debug+ Clone + Integer + ToPrimitive + Signed + From<i64> + TryInto<u64> + Pow<u64, Output = T>> Pow<Self> for Rational<T> {
+impl<T: Clone + Integer + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T> + Signed + ToPrimitive> Pow<Self> for Rational<T> {
+// impl<T:std::fmt::Debug+ Clone + Integer + ToPrimitive + Signed + From<i64> + TryTryInto<u64> + Pow<u64, Output = T>> Pow<Self> for Rational<T> {
     type Output = Self;
 
     fn pow(self, exp: Self) -> Self {
@@ -136,32 +139,50 @@ impl<T:std::fmt::Debug+ Clone + Integer + ToPrimitive + Signed + From<i64> + Try
             return Self(Ratio::new(self.0.numer().clone().pow(exp.0.to_integer().to_u64().unwrap()), self.0.denom().clone().pow(exp.0.to_integer().to_u64().unwrap())));
         }
 
-        // // LIGHT:
-        // // |  a  |c    a^c
-        // // | --- |  = -----
-        // // |  b  |     b^c
-
-        // let r = to_f64!(rhs.0);
-        // let numer = ((self.0.numer().to_f64().unwrap().powf(r) * 1e10).round() as u64).try_into().ok().unwrap();
-        // let denom = ((self.0.denom().to_f64().unwrap().powf(r) * 1e10).round() as u64).try_into().ok().unwrap();
-
-        // Self(Ratio::new(numer, denom))
-
-        panic!("{:?}", self.ln());
-
-        // (exp * self.ln()).exp()
+        (exp * Self(self.0.abs()).ln().unwrap()).exp()
     }
 }
 
-impl<T: Clone + Integer + From<i64> + TryInto<u64> + Pow<u64, Output = T>> Rational<T> {
-    pub fn ln(mut self) -> Self {
-        let p = (Ratio::new(41904491.into(), 43538251.into()) * ((self.0.clone() - Ratio::one()) / (self.0.clone() + Ratio::one()))).round().numer().clone();
-        self.0 = self.0 * T::from(10);
-        let pp = p.clone().try_into().ok().unwrap();
-        let smol_ln = Ratio::new(self.0.numer().clone().pow(pp.clone()), self.0.denom().clone().pow(pp)) - Ratio::one();
+impl<T: Clone + Integer + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T> + Signed> Rational<T> {
+    pub fn ln(self) -> Option<Self> {
+        if !self.0.is_positive() {
+            return None;
+        }
 
-        Self(smol_ln + Ratio::new_raw(53443.into(), 23210.into()) * p)
+        let b = (self.0.round().numer().clone().min(ln_const::S.try_into().ok().unwrap()) - T::one()).max(T::zero()).try_into().ok().unwrap() as usize;
+        let consts = &ln_const::LN_CONSTS[b];
+        let b_a = Ratio::new(consts[0].try_into().ok().unwrap(), consts[1].try_into().ok().unwrap());
+        let b_b = Ratio::new(consts[2].try_into().ok().unwrap(), consts[3].try_into().ok().unwrap());
+        let b_c = Ratio::new(consts[4].try_into().ok().unwrap(), consts[5].try_into().ok().unwrap());
+
+        let p_a = (b_a * ((self.0.clone() - T::one()) / (self.0.clone() + T::one()))).max(Ratio::zero());
+        let p = (p_a * T::try_from(ln_const::U).ok().unwrap()).round();
+
+        let mut x = (self.0.clone() / b_b.pow(p.numer().clone().try_into().ok().unwrap())) + (p / T::try_from(ln_const::U).ok().unwrap()) * b_c - T::one();
+
+        // for _ in 0..(self.0.clone() / Ratio::new_raw(ln_const::S.try_into().ok().unwrap(), T::one())).floor().numer().clone().try_into().ok().unwrap() {
+        //     let exp = Self(x.clone()).exp().0;
+        //     x = x.clone() - ((exp.clone() - self.0.clone()) / exp);
+        // }
+
+        Some(Self(x))
     }
+
+    pub fn exp(self) -> Self {
+        Self(
+            Ratio::new_raw(
+                517656.try_into().ok().unwrap(),
+                190435.try_into().ok().unwrap()
+            ).pow(self.0.floor().numer().clone().try_into().ok().unwrap())
+            + exp_corr(self.0.fract())
+        )
+    }
+}
+
+fn exp_corr<T: Clone + Integer + TryFrom<u64> + Pow<u64, Output = T>>(r: Ratio<T>) -> Ratio<T> {
+    let two = T::try_from(2_u64).ok().unwrap();
+    let six = T::try_from(6_u64).ok().unwrap();
+    ((r.clone() * two.clone()) / (Ratio::zero() - r.clone() + (r.pow(2_u64)) / six) + two) + T::one()
 }
 
 impl<T: Clone + Integer + core::fmt::Display + ToPrimitive> core::fmt::Display for Rational<T> {
@@ -176,11 +197,7 @@ impl<T: Clone + Integer + core::fmt::Display + ToPrimitive> core::fmt::Display f
     }
 }
 
-// fn exp_approx<T: Clone + Integer + ToPrimitive + Signed + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T>>(exp: Ratio<T>) -> Ratio<T> {
-//     // Rational(Ratio::new_raw(517656.try_into().ok().unwrap(), 190435.try_into().ok().unwrap())).pow(Rational(exp)).0
-// }
-
-impl<T:std::fmt::Debug+ Clone + Integer + ToPrimitive + Signed + From<i64> + TryInto<u64> + Pow<u64, Output = T>> ExecuteFunction for Rational<T> {
+impl<T: Clone + Integer + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T> + Signed + ToPrimitive> ExecuteFunction for Rational<T> {
     fn execute(f: &str, args: &[Self]) -> Result<Self, ()> {
         match (f, args.len()) {
             ("floor", 1) => Ok(Self(args[0].0.floor())),
@@ -190,24 +207,24 @@ impl<T:std::fmt::Debug+ Clone + Integer + ToPrimitive + Signed + From<i64> + Try
             ("fract", 1) => Ok(Self(args[0].0.fract())),
             ("abs", 1) => Ok(Self(args[0].0.abs())),
             ("sqrt" | "√", 1) => Ok(args[0].clone().pow(Self(Ratio::new(T::one(), T::one() + T::one())))),
-            ("ln", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).ln()))),
-            ("log", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).log10()))),
-            ("log", 2) => Ok(Self(from_f64!(to_f64!(args[0].0).log(to_f64!(args[0].0))))),
+            ("ln", 1) => args[0].clone().ln().ok_or(()),
+            // ("log", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).log10()))),
+            // ("log", 2) => Ok(Self(from_f64!(to_f64!(args[0].0).log(to_f64!(args[0].0))))),
             ("min", _) => Ok(Self(args.iter().map(|a| a.0.clone()).min().ok_or(())?)),
             ("max", _) => Ok(Self(args.iter().map(|a| a.0.clone()).max().ok_or(())?)),
             ("cbrt" | "∛", 1) => Ok(args[0].clone().pow(Self(Ratio::new(T::one(), T::one() + T::one() + T::one())))),
-            ("sin", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).sin()))),
-            ("cos", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).cos()))),
-            ("tan", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).tan()))),
-            ("asin", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).asin()))),
-            ("acos", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).acos()))),
-            ("atan", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).atan()))),
-            ("sinh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).sinh()))),
-            ("cosh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).cosh()))),
-            ("tanh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).tanh()))),
-            ("asinh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).asinh()))),
-            ("acosh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).acosh()))),
-            ("atanh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).atanh()))),
+            // ("sin", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).sin()))),
+            // ("cos", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).cos()))),
+            // ("tan", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).tan()))),
+            // ("asin", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).asin()))),
+            // ("acos", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).acos()))),
+            // ("atan", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).atan()))),
+            // ("sinh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).sinh()))),
+            // ("cosh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).cosh()))),
+            // ("tanh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).tanh()))),
+            // ("asinh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).asinh()))),
+            // ("acosh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).acosh()))),
+            // ("atanh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).atanh()))),
             _ => Err(()),
         }
     }

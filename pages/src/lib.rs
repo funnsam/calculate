@@ -35,6 +35,11 @@ fn evaluate<T: ComputableNumeral>(s: &str) -> Result<T, String> {
 }
 
 #[wasm_bindgen]
+pub fn enable_panic_hook() {
+    std::panic::set_hook(Box::new(console_error_panic_hook::hook));
+}
+
+#[wasm_bindgen]
 pub fn evaluate_f32(s: &str) -> String {
     evaluate::<f32>(s)
         .map(|a| trunc(&format!("{a:.5}")).to_string())

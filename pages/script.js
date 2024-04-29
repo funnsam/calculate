@@ -17,10 +17,14 @@ document.addEventListener("DOMContentLoaded", (_) => {
 
 		// sanitization should be done in rust side
 		OUTPUT.innerHTML = evaluate(INPUT.value);
+
+		let typ = window.location.hash.slice(1).split("-", 1)[0];
+		SHARE_URL.innerText = `${window.location.protocol}//${window.location.host}${window.location.pathname}#${typ}-${btoa(INPUT.value)}`;
 	}
 
 	const INPUT = document.getElementById("input");
 	const OUTPUT = document.getElementById("result");
+	const SHARE_URL = document.getElementById("share_url");
 
 	let expr = window.location.hash.slice(1).split("-", 2)[1];
 	if (expr !== undefined) {
@@ -29,7 +33,15 @@ document.addEventListener("DOMContentLoaded", (_) => {
 		} catch {}
 	}
 
-	init().then(update);
+	init().then(
+		() => {
+			bindings.enable_panic_hook();
+			update();
+		},
+		() => {
+			alert("Get a real browser kiddo");
+		}
+	);
 	INPUT.oninput = (_) => { update(); };
 	window.onhashchange = update;
 
@@ -37,12 +49,5 @@ document.addEventListener("DOMContentLoaded", (_) => {
 	SELECTOR.value = window.location.hash.slice(1).split("-", 1)[0];
 	SELECTOR.onchange = (_) => {
 		window.location.hash = SELECTOR.value;
-	};
-
-	const SHARE = document.getElementById("share");
-	const SHARE_URL = document.getElementById("share_url");
-	SHARE.onclick = (_) => {
-		let typ = window.location.hash.slice(1).split("-", 1)[0];
-		SHARE_URL.innerText = `${window.location.protocol}//${window.location.host}${window.location.pathname}#${typ}-${btoa(INPUT.value)}`;
 	};
 });
