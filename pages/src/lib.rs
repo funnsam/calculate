@@ -58,7 +58,8 @@ pub fn evaluate_f64(s: &str) -> String {
 #[wasm_bindgen]
 pub fn evaluate_rational(s: &str) -> String {
     evaluate::<rational::Rational<BigInt>>(s)
-        .map(|a| format!("{a:#}"))
+        .map(|v| v.limit_denom(1_000_000_000_000_000_u64.into()))
+        .map(|v| format!("{v:#}"))
         .map(pretty_result)
         .unwrap_or_else(|s| s)
 }

@@ -22,6 +22,48 @@ macro_rules! from_f64 {
 #[cfg(feature = "num_complex")]
 pub mod complex;
 
+impl<T: Clone + Integer> Rational<T> {
+    pub fn limit_denom(&self, md: T) -> Self {
+        if md > self.0.denom().clone() {
+            return self.clone();
+        }
+
+        let mut p0 = T::zero();
+        let mut q0 = T::one();
+        let mut p1 = T::one();
+        let mut q1 = T::zero();
+        let mut n = self.0.numer().clone();
+        let mut d = self.0.denom().clone();
+
+        loop {
+            let a = n.clone() / d.clone();
+            let q2 = q0.clone() + a.clone() * q1.clone();
+
+            if q2 > md {
+                break;
+            }
+
+            let tp1 = p0 + a.clone() * p1.clone();
+            p0 = p1;
+            q0 = q1;
+            p1 = tp1;
+            q1 = q2;
+
+            let td = n - a * d.clone();
+            n = d;
+            d = td;
+        }
+        let k = (md - q0.clone()) / q1.clone();
+
+        let two = T::one() + T::one();
+        if two * d.clone() * (q0.clone() + k.clone() * q1.clone()) <= d {
+            Self(Ratio::new_raw(p1, q1))
+        } else {
+            Self(Ratio::new_raw(p0 + k.clone() * p1, q0 + k * q1))
+        }
+    }
+}
+
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Rational<T: Clone + Integer>(pub Ratio<T>);
 
@@ -158,11 +200,11 @@ impl<T: Clone + Integer + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T> + S
         let p_a = (b_a * ((self.0.clone() - T::one()) / (self.0.clone() + T::one()))).max(Ratio::zero());
         let p = (p_a * T::try_from(ln_const::U).ok().unwrap()).round();
 
-        let mut x = (self.0.clone() / b_b.pow(p.numer().clone().try_into().ok().unwrap())) + (p / T::try_from(ln_const::U).ok().unwrap()) * b_c - T::one();
+        let x = (self.0.clone() / b_b.pow(p.numer().clone().try_into().ok().unwrap())) + (p / T::try_from(ln_const::U).ok().unwrap()) * b_c - T::one();
 
         // for _ in 0..(self.0.clone() / Ratio::new_raw(ln_const::S.try_into().ok().unwrap(), T::one())).floor().numer().clone().try_into().ok().unwrap() {
         //     let exp = Self(x.clone()).exp().0;
-        //     x = x.clone() - ((exp.clone() - self.0.clone()) / exp);
+        //     x = x - (exp.clone() - self.0.clone()) / exp;
         // }
 
         Some(Self(x))
