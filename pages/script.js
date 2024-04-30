@@ -36,7 +36,7 @@ document.addEventListener("DOMContentLoaded", (_) => {
 	}
 
 	init().then(() => {
-		bindings.enable_panic_hook();
+		// bindings.enable_panic_hook();
 		update();
 	});
 	INPUT.oninput = (_) => { update(); };

@@ -11,7 +11,12 @@ num-complex = "0.4.5"
 num-rational = "0.4.1"
 wasm-bindgen = "0.2.92"
 num-traits = "0.2.18"
-console_error_panic_hook = "0.1.7"
+# console_error_panic_hook = "0.1.7"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
+
+[profile.release]
+lto = true
+opt-level = "z"
+strip = true

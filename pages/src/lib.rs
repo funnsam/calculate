@@ -33,8 +33,8 @@ fn evaluate<T: ComputableNumeral>(s: &str) -> Result<T, String> {
         .map_err(|span| report(s, span))?)
 }
 
-#[wasm_bindgen]
-pub fn enable_panic_hook() { std::panic::set_hook(Box::new(console_error_panic_hook::hook)); }
+// #[wasm_bindgen]
+// pub fn enable_panic_hook() { std::panic::set_hook(Box::new(console_error_panic_hook::hook)); }
 
 #[wasm_bindgen]
 pub fn evaluate_f32(s: &str) -> String {
