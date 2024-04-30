@@ -9,6 +9,8 @@ const EVALUATES = {
 };
 
 document.addEventListener("DOMContentLoaded", (_) => {
+	document.body.style.visibility = 'visible';
+
 	function update() {
 		let evaluate = EVALUATES[window.location.hash.slice(1).split("-", 1)[0]];
 		if (evaluate === undefined) {
