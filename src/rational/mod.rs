@@ -1,8 +1,8 @@
-use core::ops::*;
 use crate::traits::*;
-use num_traits::*;
-use num_rational::*;
+use core::ops::*;
 use num_integer::*;
+use num_rational::*;
+use num_traits::*;
 
 mod ln_const;
 
@@ -116,9 +116,7 @@ delegate_biop!(Rational, Rem, rem);
 impl<T: Clone + Integer + Neg<Output = T>> Neg for Rational<T> {
     type Output = Self;
 
-    fn neg(self) -> Self {
-        Self(self.0.neg())
-    }
+    fn neg(self) -> Self { Self(self.0.neg()) }
 }
 
 impl<T: Clone + Integer + From<u8> + AddAssign + MulAssign> Num for Rational<T> {
@@ -151,8 +149,12 @@ impl<T: Clone + Integer> One for Rational<T> {
     fn set_one(&mut self) { self.0.set_one() }
 }
 
-impl<T: Clone + Integer + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T> + Signed + ToPrimitive> Pow<Self> for Rational<T> {
-// impl<T:std::fmt::Debug+ Clone + Integer + ToPrimitive + Signed + From<i64> + TryTryInto<u64> + Pow<u64, Output = T>> Pow<Self> for Rational<T> {
+impl<
+        T: Clone + Integer + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T> + Signed + ToPrimitive,
+    > Pow<Self> for Rational<T>
+{
+    // impl<T:std::fmt::Debug+ Clone + Integer + ToPrimitive + Signed + From<i64> + TryTryInto<u64>
+    // + Pow<u64, Output = T>> Pow<Self> for Rational<T> {
     type Output = Self;
 
     fn pow(self, exp: Self) -> Self {
@@ -165,7 +167,16 @@ impl<T: Clone + Integer + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T> + S
         }
 
         if exp.0.is_integer() {
-            return Self(Ratio::new(self.0.numer().clone().pow(exp.0.to_integer().to_u64().unwrap()), self.0.denom().clone().pow(exp.0.to_integer().to_u64().unwrap())));
+            return Self(Ratio::new(
+                self.0
+                    .numer()
+                    .clone()
+                    .pow(exp.0.to_integer().to_u64().unwrap()),
+                self.0
+                    .denom()
+                    .clone()
+                    .pow(exp.0.to_integer().to_u64().unwrap()),
+            ));
         }
 
         (exp * Self(self.0.abs()).ln().unwrap()).exp()
@@ -178,20 +189,42 @@ impl<T: Clone + Integer + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T> + S
             return None;
         }
 
-        let b = (self.0.round().numer().clone().min(ln_const::S.try_into().ok().unwrap()) - T::one()).max(T::zero()).try_into().ok().unwrap() as usize;
+        let b = (self
+            .0
+            .round()
+            .numer()
+            .clone()
+            .min(ln_const::S.try_into().ok().unwrap())
+            - T::one())
+        .max(T::zero())
+        .try_into()
+        .ok()
+        .unwrap() as usize;
         let consts = &ln_const::LN_CONSTS[b];
-        let b_a = Ratio::new(consts[0].try_into().ok().unwrap(), consts[1].try_into().ok().unwrap());
-        let b_b = Ratio::new(consts[2].try_into().ok().unwrap(), consts[3].try_into().ok().unwrap());
-        let b_c = Ratio::new(consts[4].try_into().ok().unwrap(), consts[5].try_into().ok().unwrap());
+        let b_a = Ratio::new(
+            consts[0].try_into().ok().unwrap(),
+            consts[1].try_into().ok().unwrap(),
+        );
+        let b_b = Ratio::new(
+            consts[2].try_into().ok().unwrap(),
+            consts[3].try_into().ok().unwrap(),
+        );
+        let b_c = Ratio::new(
+            consts[4].try_into().ok().unwrap(),
+            consts[5].try_into().ok().unwrap(),
+        );
 
-        let p_a = (b_a * ((self.0.clone() - T::one()) / (self.0.clone() + T::one()))).max(Ratio::zero());
+        let p_a =
+            (b_a * ((self.0.clone() - T::one()) / (self.0.clone() + T::one()))).max(Ratio::zero());
         let p = (p_a * T::try_from(ln_const::U).ok().unwrap()).round();
 
-        let x = (self.0.clone() / b_b.pow(p.numer().clone().try_into().ok().unwrap())) + (p / T::try_from(ln_const::U).ok().unwrap()) * b_c - T::one();
+        let x = (self.0.clone() / b_b.pow(p.numer().clone().try_into().ok().unwrap()))
+            + (p / T::try_from(ln_const::U).ok().unwrap()) * b_c
+            - T::one();
 
-        // for _ in 0..(self.0.clone() / Ratio::new_raw(ln_const::S.try_into().ok().unwrap(), T::one())).floor().numer().clone().try_into().ok().unwrap() {
-        //     let exp = Self(x.clone()).exp().0;
-        //     x = x - (exp.clone() - self.0.clone()) / exp;
+        // for _ in 0..(self.0.clone() / Ratio::new_raw(ln_const::S.try_into().ok().unwrap(),
+        // T::one())).floor().numer().clone().try_into().ok().unwrap() {     let exp =
+        // Self(x.clone()).exp().0;     x = x - (exp.clone() - self.0.clone()) / exp;
         // }
 
         Some(Self(x))
@@ -201,34 +234,45 @@ impl<T: Clone + Integer + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T> + S
         Self(
             Ratio::new_raw(
                 517656.try_into().ok().unwrap(),
-                190435.try_into().ok().unwrap()
-            ).pow(self.0.floor().numer().clone().try_into().ok().unwrap())
-            * exp_corr(self.0.fract())
+                190435.try_into().ok().unwrap(),
+            )
+            .pow(self.0.floor().numer().clone().try_into().ok().unwrap())
+                * exp_corr(self.0.fract()),
         )
     }
 
     pub fn sin(&self) -> Self {
-        let pi = Ratio::new_raw(312689.try_into().ok().unwrap(), 99532.try_into().ok().unwrap());
-        let halfpi = Ratio::new_raw(312689.try_into().ok().unwrap(), 199064.try_into().ok().unwrap());
-        let tau = Ratio::new_raw(312689.try_into().ok().unwrap(), 49766.try_into().ok().unwrap());
-        let halfthreepi = Ratio::new_raw(938067.try_into().ok().unwrap(), 199064.try_into().ok().unwrap());
+        let pi = Ratio::new_raw(
+            312689.try_into().ok().unwrap(),
+            99532.try_into().ok().unwrap(),
+        );
+        let halfpi = Ratio::new_raw(
+            312689.try_into().ok().unwrap(),
+            199064.try_into().ok().unwrap(),
+        );
+        let tau = Ratio::new_raw(
+            312689.try_into().ok().unwrap(),
+            49766.try_into().ok().unwrap(),
+        );
+        let halfthreepi = Ratio::new_raw(
+            938067.try_into().ok().unwrap(),
+            199064.try_into().ok().unwrap(),
+        );
 
         let c = (self.0.clone() + halfpi.clone()) % tau;
-        let c = if c > pi {
-            halfthreepi - c
-        } else {
-            c - halfpi
-        };
+        let c = if c > pi { halfthreepi - c } else { c - halfpi };
 
-        let f = c.clone()
-            - c.clone().pow(3_u64) / T::try_from(6).ok().unwrap()
+        let f = c.clone() - c.clone().pow(3_u64) / T::try_from(6).ok().unwrap()
             + c.clone().pow(5_u64) / T::try_from(120).ok().unwrap();
 
         Self(f)
     }
 
     pub fn cos(&self) -> Self {
-        let halfpi = Ratio::new_raw(312689.try_into().ok().unwrap(), 199064.try_into().ok().unwrap());
+        let halfpi = Ratio::new_raw(
+            312689.try_into().ok().unwrap(),
+            199064.try_into().ok().unwrap(),
+        );
 
         Self(self.0.clone() + halfpi).sin()
     }
@@ -245,14 +289,23 @@ impl<T: Clone + Integer + core::fmt::Display + ToPrimitive> core::fmt::Display f
         if self.0.denom().is_one() {
             self.0.numer().fmt(f)
         } else if f.alternate() {
-            write!(f, "{} / {} ({})", self.0.numer(), self.0.denom(), self.0.numer().to_f64().unwrap() / self.0.denom().to_f64().unwrap())
+            write!(
+                f,
+                "{} / {} ({})",
+                self.0.numer(),
+                self.0.denom(),
+                self.0.numer().to_f64().unwrap() / self.0.denom().to_f64().unwrap()
+            )
         } else {
             write!(f, "({} / {})", self.0.numer(), self.0.denom())
         }
     }
 }
 
-impl<T: Clone + Integer + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T> + Signed + ToPrimitive> ExecuteFunction for Rational<T> {
+impl<
+        T: Clone + Integer + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T> + Signed + ToPrimitive,
+    > ExecuteFunction for Rational<T>
+{
     fn execute(f: &str, args: &[Self]) -> Result<Self, ()> {
         match (f, args.len()) {
             ("floor", 1) => Ok(Self(args[0].0.floor())),
@@ -261,13 +314,17 @@ impl<T: Clone + Integer + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T> + S
             ("trunc", 1) => Ok(Self(args[0].0.trunc())),
             ("fract", 1) => Ok(Self(args[0].0.fract())),
             ("abs", 1) => Ok(Self(args[0].0.abs())),
-            ("sqrt" | "√", 1) => Ok(args[0].clone().pow(Self(Ratio::new(T::one(), T::one() + T::one())))),
+            ("sqrt" | "√", 1) => Ok(args[0]
+                .clone()
+                .pow(Self(Ratio::new(T::one(), T::one() + T::one())))),
             ("ln", 1) => args[0].clone().ln().ok_or(()),
             // ("log", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).log10()))),
             // ("log", 2) => Ok(Self(from_f64!(to_f64!(args[0].0).log(to_f64!(args[0].0))))),
             ("min", _) => Ok(Self(args.iter().map(|a| a.0.clone()).min().ok_or(())?)),
             ("max", _) => Ok(Self(args.iter().map(|a| a.0.clone()).max().ok_or(())?)),
-            ("cbrt" | "∛", 1) => Ok(args[0].clone().pow(Self(Ratio::new(T::one(), T::one() + T::one() + T::one())))),
+            ("cbrt" | "∛", 1) => Ok(args[0]
+                .clone()
+                .pow(Self(Ratio::new(T::one(), T::one() + T::one() + T::one())))),
             ("sin", 1) => Ok(args[0].sin()),
             ("cos", 1) => Ok(args[0].cos()),
             // ("tan", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).tan()))),

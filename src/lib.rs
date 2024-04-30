@@ -155,10 +155,12 @@ fn parse_single<T: Clone + Numeral>(lex: &mut PeekingLexer<'_, T>) -> Result<Nod
 
                 match lex.peek() {
                     Some(Ok(Token::BEnd(_))) => break,
-                    Some(Ok(Token::Comma)) => { lex.next(); },
+                    Some(Ok(Token::Comma)) => {
+                        lex.next();
+                    },
                     _ => {
                         lex.next();
-                        return Err(lex.report_span())
+                        return Err(lex.report_span());
                     },
                 }
             }
@@ -426,7 +428,10 @@ impl<Number: Numeral> Iterator for Lexer<'_, Number> {
                     }
 
                     if matches!(c, '(' | '[' | '{') {
-                        return Some(Ok(Token::FStart(repl_greeks(&s).to_string(), btype(c).unwrap())));
+                        return Some(Ok(Token::FStart(
+                            repl_greeks(&s).to_string(),
+                            btype(c).unwrap(),
+                        )));
                     }
 
                     s.push(c);

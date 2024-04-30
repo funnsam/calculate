@@ -18,7 +18,9 @@ macro_rules! to_f64_cmplx {
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct ComplexRational<T: Clone + Integer>(pub Complex<Ratio<T>>);
 
-impl<T: Clone + Integer + From<u8> + AddAssign + MulAssign> core::str::FromStr for ComplexRational<T> {
+impl<T: Clone + Integer + From<u8> + AddAssign + MulAssign> core::str::FromStr
+    for ComplexRational<T>
+{
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, ()> {
@@ -48,12 +50,30 @@ impl<T: Clone + Integer + From<u8> + AddAssign + MulAssign> core::str::FromStr f
 impl<T: Clone + Integer + From<usize>> FromConstant for ComplexRational<T> {
     fn from_constant(c: &str) -> Option<Self> {
         match c {
-            "π" => Some(Self(Complex::new(Ratio::new_raw(312689.into(), 99532.into()), Ratio::zero()))),
-            "φ" | "ϕ" => Some(Self(Complex::new(Ratio::new_raw(121393.into(), 75025.into()), Ratio::zero()))),
-            "e" => Some(Self(Complex::new(Ratio::new_raw(517656.into(), 190435.into()), Ratio::zero()))),
-            "τ" => Some(Self(Complex::new(Ratio::new_raw(312689.into(), 49766.into()), Ratio::zero()))),
-            "γ" => Some(Self(Complex::new(Ratio::new_raw(30316449.into(), 52521875.into()), Ratio::zero()))),
-            "c_m/s" => Some(Self(Complex::new(Ratio::new_raw(299792458.into(), 1.into()), Ratio::zero()))),
+            "π" => Some(Self(Complex::new(
+                Ratio::new_raw(312689.into(), 99532.into()),
+                Ratio::zero(),
+            ))),
+            "φ" | "ϕ" => Some(Self(Complex::new(
+                Ratio::new_raw(121393.into(), 75025.into()),
+                Ratio::zero(),
+            ))),
+            "e" => Some(Self(Complex::new(
+                Ratio::new_raw(517656.into(), 190435.into()),
+                Ratio::zero(),
+            ))),
+            "τ" => Some(Self(Complex::new(
+                Ratio::new_raw(312689.into(), 49766.into()),
+                Ratio::zero(),
+            ))),
+            "γ" => Some(Self(Complex::new(
+                Ratio::new_raw(30316449.into(), 52521875.into()),
+                Ratio::zero(),
+            ))),
+            "c_m/s" => Some(Self(Complex::new(
+                Ratio::new_raw(299792458.into(), 1.into()),
+                Ratio::zero(),
+            ))),
             "i" => Some(Self(Complex::new(Ratio::zero(), Ratio::one()))),
             _ => None,
         }
@@ -69,9 +89,7 @@ delegate_biop!(ComplexRational, Rem, rem);
 impl<T: Clone + Integer + Neg<Output = T>> Neg for ComplexRational<T> {
     type Output = Self;
 
-    fn neg(self) -> Self {
-        Self(self.0.neg())
-    }
+    fn neg(self) -> Self { Self(self.0.neg()) }
 }
 
 impl<T: Clone + Integer + From<u8> + AddAssign + MulAssign> Num for ComplexRational<T> {
@@ -104,7 +122,18 @@ impl<T: Clone + Integer> One for ComplexRational<T> {
     fn set_one(&mut self) { self.0.set_one() }
 }
 
-impl<T: Clone + Integer + Zero + ToPrimitive + Signed + From<i64> + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T>> Pow<Self> for ComplexRational<T> {
+impl<
+        T: Clone
+            + Integer
+            + Zero
+            + ToPrimitive
+            + Signed
+            + From<i64>
+            + TryFrom<u64>
+            + TryInto<u64>
+            + Pow<u64, Output = T>,
+    > Pow<Self> for ComplexRational<T>
+{
     type Output = Self;
 
     fn pow(self, exp: Self) -> Self {
@@ -116,7 +145,18 @@ impl<T: Clone + Integer + Zero + ToPrimitive + Signed + From<i64> + TryFrom<u64>
     }
 }
 
-impl<T: Clone + Integer + Zero + ToPrimitive + Signed + From<i64> + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T>> ComplexRational<T> {
+impl<
+        T: Clone
+            + Integer
+            + Zero
+            + ToPrimitive
+            + Signed
+            + From<i64>
+            + TryFrom<u64>
+            + TryInto<u64>
+            + Pow<u64, Output = T>,
+    > ComplexRational<T>
+{
     pub fn exp(self) -> Self {
         let Complex { re, im } = self.0;
         Self::from_polar(exp_approx(re), im)
@@ -135,7 +175,12 @@ impl<T: Clone + Integer + Zero + ToPrimitive + Signed + From<i64> + TryFrom<u64>
         let im = to_f64!(self.0.im);
         let atan = from_f64!(im.atan2(re));
 
-        (Rational(self.0.re.clone() * self.0.re + self.0.im.clone() * self.0.im).pow(Rational(Ratio::new_raw(1.into(), 2.into()))).0, atan)
+        (
+            Rational(self.0.re.clone() * self.0.re + self.0.im.clone() * self.0.im)
+                .pow(Rational(Ratio::new_raw(1.into(), 2.into())))
+                .0,
+            atan,
+        )
     }
 
     pub fn ln(self) -> Self {
@@ -144,20 +189,46 @@ impl<T: Clone + Integer + Zero + ToPrimitive + Signed + From<i64> + TryFrom<u64>
     }
 }
 
-impl<T: Clone + Integer + Signed + core::fmt::Display + ToPrimitive> core::fmt::Display for ComplexRational<T> {
+impl<T: Clone + Integer + Signed + core::fmt::Display + ToPrimitive> core::fmt::Display
+    for ComplexRational<T>
+{
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         if !self.0.im.is_negative() {
-            write!(f, "{}+{}i", Rational(self.0.re.clone()), Rational(self.0.im.clone()))
+            write!(
+                f,
+                "{}+{}i",
+                Rational(self.0.re.clone()),
+                Rational(self.0.im.clone())
+            )
         } else {
-            write!(f, "{}-{}i", Rational(self.0.re.clone()), Rational(self.0.im.abs().clone()))
+            write!(
+                f,
+                "{}-{}i",
+                Rational(self.0.re.clone()),
+                Rational(self.0.im.abs().clone())
+            )
         }
     }
 }
 
-impl<T: Clone + Integer + Zero + ToPrimitive + Signed + From<i64> + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T>> ExecuteFunction for ComplexRational<T> {
+impl<
+        T: Clone
+            + Integer
+            + Zero
+            + ToPrimitive
+            + Signed
+            + From<i64>
+            + TryFrom<u64>
+            + TryInto<u64>
+            + Pow<u64, Output = T>,
+    > ExecuteFunction for ComplexRational<T>
+{
     fn execute(f: &str, args: &[Self]) -> Result<Self, ()> {
         match (f, args.len()) {
-            ("conj", 1) => Ok(Self(Complex::new(args[0].0.re.clone(), -args[0].0.im.clone()))),
+            ("conj", 1) => Ok(Self(Complex::new(
+                args[0].0.re.clone(),
+                -args[0].0.im.clone(),
+            ))),
             ("ln", 1) => Ok(args[0].clone().ln()),
             ("sin", 1) => Ok(Self(from_f64_cmplx!(to_f64_cmplx!(args[0].0).sin()))),
             ("cos", 1) => Ok(Self(from_f64_cmplx!(to_f64_cmplx!(args[0].0).cos()))),
