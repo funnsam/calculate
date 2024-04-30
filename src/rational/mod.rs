@@ -203,7 +203,7 @@ impl<T: Clone + Integer + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T> + S
                 517656.try_into().ok().unwrap(),
                 190435.try_into().ok().unwrap()
             ).pow(self.0.floor().numer().clone().try_into().ok().unwrap())
-            + exp_corr(self.0.fract())
+            * exp_corr(self.0.fract())
         )
     }
 
@@ -237,7 +237,7 @@ impl<T: Clone + Integer + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T> + S
 fn exp_corr<T: Clone + Integer + TryFrom<u64> + Pow<u64, Output = T>>(r: Ratio<T>) -> Ratio<T> {
     let two = T::try_from(2_u64).ok().unwrap();
     let six = T::try_from(6_u64).ok().unwrap();
-    ((r.clone() * two.clone()) / (Ratio::zero() - r.clone() + (r.pow(2_u64)) / six) + two) + T::one()
+    (r.clone() * two.clone()) / (r.clone().pow(2_u64) / six - r + two) + T::one()
 }
 
 impl<T: Clone + Integer + core::fmt::Display + ToPrimitive> core::fmt::Display for Rational<T> {

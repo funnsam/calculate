@@ -1,6 +1,6 @@
-use smolcalc::{*, traits::*};
 use num_bigint::BigInt;
 use num_complex::Complex;
+use smolcalc::{traits::*, *};
 use wasm_bindgen::prelude::*;
 
 fn sanitize(s: &str) -> String {
@@ -30,14 +30,11 @@ fn evaluate<T: ComputableNumeral>(s: &str) -> Result<T, String> {
     Ok(to_nodes::<T>(s)
         .map_err(|span| report(s, span))?
         .evaluate()
-        .map_err(|span| report(s, span))?
-    )
+        .map_err(|span| report(s, span))?)
 }
 
 #[wasm_bindgen]
-pub fn enable_panic_hook() {
-    std::panic::set_hook(Box::new(console_error_panic_hook::hook));
-}
+pub fn enable_panic_hook() { std::panic::set_hook(Box::new(console_error_panic_hook::hook)); }
 
 #[wasm_bindgen]
 pub fn evaluate_f32(s: &str) -> String {
@@ -71,7 +68,7 @@ pub fn evaluate_rational(s: &str) -> String {
 //         .map(pretty_result)
 //         .unwrap_or_else(|s| s)
 // }
-// 
+//
 // #[wasm_bindgen]
 // pub fn evaluate_cmplx_f64(s: &str) -> String {
 //     evaluate::<Complex<f64>>(s)
@@ -79,7 +76,7 @@ pub fn evaluate_rational(s: &str) -> String {
 //         .map(pretty_result)
 //         .unwrap_or_else(|s| s)
 // }
-// 
+//
 // #[wasm_bindgen]
 // pub fn evaluate_cmplx_rational(s: &str) -> String {
 //     evaluate::<rational::complex::ComplexRational<BigInt>>(s)
@@ -88,11 +85,12 @@ pub fn evaluate_rational(s: &str) -> String {
 //         .unwrap_or_else(|s| s)
 // }
 
-fn pretty_result(s: String) -> String {
-    format!("= {}", sanitize(&s))
-}
+fn pretty_result(s: String) -> String { format!("= {}", sanitize(&s)) }
 
-fn pretty_cmplx<T: num_traits::Float + num_traits::Signed, F: Fn(T) -> String>(c: Complex<T>, f: F) -> String {
+fn pretty_cmplx<T: num_traits::Float + num_traits::Signed, F: Fn(T) -> String>(
+    c: Complex<T>,
+    f: F,
+) -> String {
     if !c.im.is_negative() {
         format!("{}+{}i", f(c.re), f(c.im))
     } else {
@@ -102,8 +100,8 @@ fn pretty_cmplx<T: num_traits::Float + num_traits::Signed, F: Fn(T) -> String>(c
 
 fn trunc(s: &str) -> &str {
     match s.as_bytes().last() {
-        Some(b'0') => trunc(&s[..s.len()-1]),
-        Some(b'.') => &s[..s.len()-1],
+        Some(b'0') => trunc(&s[..s.len() - 1]),
+        Some(b'.') => &s[..s.len() - 1],
         _ => s,
     }
 }
