@@ -6,19 +6,6 @@ use num_integer::*;
 
 mod ln_const;
 
-macro_rules! to_f64 {
-    ($f: expr) => {{
-        $f.numer().to_f64().unwrap() / $f.denom().to_f64().unwrap()
-    }};
-}
-
-macro_rules! from_f64 {
-    ($f: expr) => {{
-        let f = $f;
-        Ratio::new(((f * 1e10).round() as i64).into(), (1e10 as i64).into())
-    }};
-}
-
 #[cfg(feature = "num_complex")]
 pub mod complex;
 
@@ -219,6 +206,32 @@ impl<T: Clone + Integer + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T> + S
             + exp_corr(self.0.fract())
         )
     }
+
+    pub fn sin(&self) -> Self {
+        let pi = Ratio::new_raw(312689.try_into().ok().unwrap(), 99532.try_into().ok().unwrap());
+        let halfpi = Ratio::new_raw(312689.try_into().ok().unwrap(), 199064.try_into().ok().unwrap());
+        let tau = Ratio::new_raw(312689.try_into().ok().unwrap(), 49766.try_into().ok().unwrap());
+        let halfthreepi = Ratio::new_raw(938067.try_into().ok().unwrap(), 199064.try_into().ok().unwrap());
+
+        let c = (self.0.clone() + halfpi.clone()) % tau;
+        let c = if c > pi {
+            halfthreepi - c
+        } else {
+            c - halfpi
+        };
+
+        let f = c.clone()
+            - c.clone().pow(3_u64) / T::try_from(6).ok().unwrap()
+            + c.clone().pow(5_u64) / T::try_from(120).ok().unwrap();
+
+        Self(f)
+    }
+
+    pub fn cos(&self) -> Self {
+        let halfpi = Ratio::new_raw(312689.try_into().ok().unwrap(), 199064.try_into().ok().unwrap());
+
+        Self(self.0.clone() + halfpi).sin()
+    }
 }
 
 fn exp_corr<T: Clone + Integer + TryFrom<u64> + Pow<u64, Output = T>>(r: Ratio<T>) -> Ratio<T> {
@@ -255,8 +268,8 @@ impl<T: Clone + Integer + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T> + S
             ("min", _) => Ok(Self(args.iter().map(|a| a.0.clone()).min().ok_or(())?)),
             ("max", _) => Ok(Self(args.iter().map(|a| a.0.clone()).max().ok_or(())?)),
             ("cbrt" | "∛", 1) => Ok(args[0].clone().pow(Self(Ratio::new(T::one(), T::one() + T::one() + T::one())))),
-            // ("sin", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).sin()))),
-            // ("cos", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).cos()))),
+            ("sin", 1) => Ok(args[0].sin()),
+            ("cos", 1) => Ok(args[0].cos()),
             // ("tan", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).tan()))),
             // ("asin", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).asin()))),
             // ("acos", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).acos()))),

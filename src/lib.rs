@@ -67,7 +67,7 @@ fn parse_expr_climb<T: Clone + Numeral>(
                     add_node_right(&mut rest, depth, op, rhs);
                 }
             },
-            Some(Ok(Token::BStart(_) | Token::Number(_)))
+            Some(Ok(Token::FStart(..) | Token::BStart(..) | Token::Number(..)))
                 if BiOpr::Multiply.percedence() >= percedence =>
             {
                 let rhs = parse_expr_climb(

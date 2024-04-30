@@ -83,9 +83,13 @@ macro_rules! map_fn {
     ($type: ty: $($n: pat $(= $ac: tt => $map: tt ($($th: tt)*))? $(=> $f: expr)?),* $(,)?) => {
         impl ExecuteFunction for $type {
             fn execute(f: &str, args: &[Self]) -> Result<Self, ()> {
+                fn check(v: $type) -> Result<$type, ()> {
+                    v.is_finite().then_some(v).ok_or(())
+                }
+
                 match (f, args.len()) {
                     $(
-                        $(($n, $ac) => Ok(Self::$map($(args[$th]),*)),)?
+                        $(($n, $ac) => check(Self::$map($(args[$th]),*)),)?
                         $(($n, _) => $f(args),)?
                     )*
                     _ => Err(()),
