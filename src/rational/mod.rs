@@ -218,14 +218,22 @@ impl<T: Clone + Integer + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T> + S
             (b_a * ((self.0.clone() - T::one()) / (self.0.clone() + T::one()))).max(Ratio::zero());
         let p = (p_a * T::try_from(ln_const::U).ok().unwrap()).round();
 
-        let x = (self.0.clone() / b_b.pow(p.numer().clone().try_into().ok().unwrap()))
+        let mut x = (self.0.clone() / b_b.pow(p.numer().clone().try_into().ok().unwrap()))
             + (p / T::try_from(ln_const::U).ok().unwrap()) * b_c
             - T::one();
 
-        // for _ in 0..(self.0.clone() / Ratio::new_raw(ln_const::S.try_into().ok().unwrap(),
-        // T::one())).floor().numer().clone().try_into().ok().unwrap() {     let exp =
-        // Self(x.clone()).exp().0;     x = x - (exp.clone() - self.0.clone()) / exp;
-        // }
+        for _ in 0..(self.0.clone()
+            / Ratio::new_raw(ln_const::S.try_into().ok().unwrap(), T::one()))
+        .floor()
+        .numer()
+        .clone()
+        .try_into()
+        .ok()
+        .unwrap()
+        {
+            let exp = Self(x.clone()).exp().0;
+            x = x - (exp.clone() - self.0.clone()) / exp;
+        }
 
         Some(Self(x))
     }
@@ -275,6 +283,27 @@ impl<T: Clone + Integer + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T> + S
         );
 
         Self(self.0.clone() + halfpi).sin()
+    }
+
+    pub fn tan(&self) -> Self {
+        let pi = Ratio::new_raw(
+            312689.try_into().ok().unwrap(),
+            99532.try_into().ok().unwrap(),
+        );
+        let halfpi = Ratio::new_raw(
+            312689.try_into().ok().unwrap(),
+            199064.try_into().ok().unwrap(),
+        );
+
+        let x = (self.0.clone() + halfpi.clone()) % pi - halfpi;
+
+        let x1 = x.clone() + x.clone().pow(3_u64) / T::try_from(3).ok().unwrap();
+        let x2 = x1 + x.clone().pow(3_u64) * T::try_from(2).ok().unwrap() / T::try_from(15).ok().unwrap();
+        let x3 = x2 + x.clone().pow(5_u64) * T::try_from(17).ok().unwrap() / T::try_from(315).ok().unwrap();
+        let x4 = x3 + x.clone().pow(7_u64) * T::try_from(62).ok().unwrap() / T::try_from(2835).ok().unwrap();
+        let x5 = x4 + x.pow(9_u64) * T::try_from(1382).ok().unwrap() / T::try_from(155925).ok().unwrap();
+
+        Self(x5)
     }
 }
 
@@ -327,7 +356,7 @@ impl<
                 .pow(Self(Ratio::new(T::one(), T::one() + T::one() + T::one())))),
             ("sin", 1) => Ok(args[0].sin()),
             ("cos", 1) => Ok(args[0].cos()),
-            // ("tan", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).tan()))),
+            ("tan", 1) => Ok(args[0].tan()),
             // ("asin", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).asin()))),
             // ("acos", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).acos()))),
             // ("atan", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).atan()))),
