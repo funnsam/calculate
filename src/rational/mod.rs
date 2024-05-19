@@ -222,7 +222,7 @@ impl<T: Clone + Integer + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T> + S
             + (p / T::try_from(ln_const::U).ok().unwrap()) * b_c
             - T::one();
 
-        for i in 0..(self.0.clone()
+        for _ in 0..(self.0.clone()
             / T::try_from(ln_const::S).ok().unwrap())
         .floor()
         .numer()
@@ -232,8 +232,8 @@ impl<T: Clone + Integer + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T> + S
         .unwrap()
         .min(8)
         {
-            #[cfg(debug_assertions)]
-            println!("iter {i}");
+            // #[cfg(debug_assertions)]
+            // println!("iter {i}");
             let denom = (Ratio::from(T::try_from(1_000_000_000_000).ok().unwrap()) / x.clone().max(Ratio::one())).round().numer().clone().max(T::one());
             let exp = Self(x.clone()).limit_denom(denom.clone()).exp();
             let denom = (Ratio::from(T::try_from(1_000_000_000_000).ok().unwrap()) / exp.0.clone().max(Ratio::one())).round().numer().clone().max(T::one());

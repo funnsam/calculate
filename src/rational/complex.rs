@@ -93,7 +93,7 @@ impl<
             + From<i64>
             + TryFrom<u64>
             + TryInto<u64>
-            + Pow<u64, Output = T>+core::fmt::Display,
+            + Pow<u64, Output = T>,
     > Pow<Self> for ComplexRational<T>
 {
     type Output = Self;
@@ -117,7 +117,7 @@ impl<
             + From<i64>
             + TryFrom<u64>
             + TryInto<u64>
-            + Pow<u64, Output = T>+core::fmt::Display,
+            + Pow<u64, Output = T>,
     > ComplexRational<T>
 {
     pub fn exp(self) -> Self {
@@ -187,8 +187,7 @@ impl<
             + From<i64>
             + TryFrom<u64>
             + TryInto<u64>
-            + Pow<u64, Output = T>
-            +core::fmt::Display,
+            + Pow<u64, Output = T>,
     > ExecuteFunction for ComplexRational<T>
 {
     fn execute(f: &str, args: &[Self]) -> Result<Self, ()> {
