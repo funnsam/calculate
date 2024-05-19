@@ -21,4 +21,3 @@ num_rational = ["dep:num-rational", "dep:num-integer"]
 
 [profile.release.package.bindings]
 opt-level = "z"
-# strip = true
