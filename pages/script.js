@@ -43,8 +43,13 @@ document.addEventListener("DOMContentLoaded", (_) => {
         update();
     });
 
+    INPUT.oninput = (_) => {
+        if (AUTO_EVAL.checked) {
+            update();
+        }
+    };
     INPUT.onkeydown = (e) => {
-        if (AUTO_EVAL.checked || e.key === "Enter") {
+        if (!AUTO_EVAL.checked && e.key === "Enter") {
             update();
         }
     };
