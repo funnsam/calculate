@@ -61,29 +61,30 @@ pub fn evaluate_rational(s: &str) -> String {
         .unwrap_or_else(|s| s)
 }
 
-// #[wasm_bindgen]
-// pub fn evaluate_cmplx_f32(s: &str) -> String {
-//     evaluate::<Complex<f32>>(s)
-//         .map(|a| pretty_cmplx(a, |a| format!("{a:.13}")))
-//         .map(pretty_result)
-//         .unwrap_or_else(|s| s)
-// }
-//
-// #[wasm_bindgen]
-// pub fn evaluate_cmplx_f64(s: &str) -> String {
-//     evaluate::<Complex<f64>>(s)
-//         .map(|a| pretty_cmplx(a, |a| format!("{a:.13}")))
-//         .map(pretty_result)
-//         .unwrap_or_else(|s| s)
-// }
-//
-// #[wasm_bindgen]
-// pub fn evaluate_cmplx_rational(s: &str) -> String {
-//     evaluate::<rational::complex::ComplexRational<BigInt>>(s)
-//         .map(|a| a.to_string())
-//         .map(pretty_result)
-//         .unwrap_or_else(|s| s)
-// }
+/*
+#[wasm_bindgen]
+pub fn evaluate_cmplx_f32(s: &str) -> String {
+    evaluate::<Complex<f32>>(s)
+        .map(|a| pretty_cmplx(a, |a| format!("{a:.13}")))
+        .map(pretty_result)
+        .unwrap_or_else(|s| s)
+}
+
+#[wasm_bindgen]
+pub fn evaluate_cmplx_f64(s: &str) -> String {
+    evaluate::<Complex<f64>>(s)
+        .map(|a| pretty_cmplx(a, |a| format!("{a:.13}")))
+        .map(pretty_result)
+        .unwrap_or_else(|s| s)
+} */
+
+#[wasm_bindgen]
+pub fn evaluate_cmplx_rational(s: &str) -> String {
+    evaluate::<rational::complex::ComplexRational<BigInt>>(s)
+        .map(|a| a.to_string())
+        .map(pretty_result)
+        .unwrap_or_else(|s| s)
+}
 
 fn pretty_result(s: String) -> String { format!("= {}", sanitize(&s)) }
 

@@ -158,7 +158,9 @@ impl<T: Clone + Integer + Signed + core::fmt::Display + ToPrimitive> core::fmt::
     for ComplexRational<T>
 {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        if !self.0.im.is_negative() {
+        if self.0.im.is_zero() {
+            Rational(self.0.re.clone()).fmt(f)
+        } else if !self.0.im.is_negative() {
             write!(
                 f,
                 "{}+{}i",
