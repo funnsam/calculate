@@ -35,21 +35,35 @@ body {
     font-family: "IBM Plex Mono", monospace;
 }
 
-body > * {
+body * {
     font-size: 18pt;
 }
 
-input {
+#input_div {
+    display: flex;
+    width: 100%;
+}
+
+#input_div > input {
+    width: 100%;
+    float: left;
+}
+
+#input_div > button {
+    float: right;
+    margin-left: var(--margin-s);
+}
+
+input[type=text] {
     border: none;
     border-bottom: var(--margin-xs) solid var(--color-normal);
     background-color: var(--color-normal-dim);
     color: var(--color-normal);
-    width: 100%;
 
     transition: 0.25s;
 }
 
-input:focus {
+input[type=text]:focus {
     outline: none;
     border-bottom: var(--margin-xs) solid var(--color-primary);
 }

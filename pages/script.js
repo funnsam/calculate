@@ -42,8 +42,9 @@ document.addEventListener("DOMContentLoaded", (_) => {
         // bindings.enable_panic_hook();
         update();
     });
-    INPUT.oninput = (_) => {
-        if (AUTO_EVAL.value) {
+
+    INPUT.onkeydown = (e) => {
+        if (AUTO_EVAL.checked || e.key === "Enter") {
             update();
         }
     };
@@ -55,4 +56,9 @@ document.addEventListener("DOMContentLoaded", (_) => {
     };
 
     EVAL_BTN.onclick = update;
+
+    AUTO_EVAL.onchange = (_) => {
+        EVAL_BTN.style.display = AUTO_EVAL.checked ? "none" : "";
+    };
+    AUTO_EVAL.onchange(); // refresh the button's state
 });

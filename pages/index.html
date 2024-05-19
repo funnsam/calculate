@@ -8,7 +8,10 @@
     </head>
     <body style="visibility: hidden;">
         <script>0</script>
-        <input type="text" id="input">
+        <div id="input_div">
+            <input type="text" id="input">
+            <button id="eval_btn">=</button>
+        </div>
         <pre><code id="result"></code></pre>
 
         <details>
@@ -25,10 +28,9 @@
 
                 <br>
 
-                <button id="eval_btn">Evaluate</button>
-                <div>
-                    <input type="checkbox" id="auto_eval" checked><label for="auto_eval">Auto evaluate</label>
-                </div>
+                <input type="checkbox" id="auto_eval" checked><label for="auto_eval">Auto evaluate</label>
+
+                <br>
 
                 <code id="share_url"></code>
             </div>

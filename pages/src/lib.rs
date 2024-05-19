@@ -81,7 +81,7 @@ pub fn evaluate_cmplx_f64(s: &str) -> String {
 #[wasm_bindgen]
 pub fn evaluate_cmplx_rational(s: &str) -> String {
     evaluate::<rational::complex::ComplexRational<BigInt>>(s)
-        .map(|a| a.to_string())
+        .map(|a| format!("{a:#}"))
         .map(pretty_result)
         .unwrap_or_else(|s| s)
 }
