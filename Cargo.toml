@@ -18,3 +18,8 @@ any_num = ["dep:num-traits"]
 num_complex = ["dep:num-complex"]
 std = []
 num_rational = ["dep:num-rational", "dep:num-integer"]
+
+[profile.release.package.bindings]
+# lto = true
+opt-level = "z"
+strip = true

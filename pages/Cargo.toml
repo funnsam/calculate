@@ -15,8 +15,3 @@ num-traits = "0.2.18"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
-
-[profile.release]
-lto = true
-opt-level = "z"
-strip = true

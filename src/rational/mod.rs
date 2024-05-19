@@ -222,20 +222,26 @@ impl<T: Clone + Integer + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T> + S
             + (p / T::try_from(ln_const::U).ok().unwrap()) * b_c
             - T::one();
 
-        for _ in 0..(self.0.clone()
-            / Ratio::new_raw(ln_const::S.try_into().ok().unwrap(), T::one()))
+        for i in 0..(self.0.clone()
+            / T::try_from(ln_const::S).ok().unwrap())
         .floor()
         .numer()
         .clone()
         .try_into()
         .ok()
         .unwrap()
+        .min(8)
         {
-            let exp = Self(x.clone()).exp().0;
+            #[cfg(debug_assertions)]
+            println!("iter {i}");
+            let denom = (Ratio::from(T::try_from(1_000_000_000_000).ok().unwrap()) / x.clone().max(Ratio::one())).round().numer().clone().max(T::one());
+            let exp = Self(x.clone()).limit_denom(denom.clone()).exp();
+            let denom = (Ratio::from(T::try_from(1_000_000_000_000).ok().unwrap()) / exp.0.clone().max(Ratio::one())).round().numer().clone().max(T::one());
+            let exp = exp.limit_denom(denom).0;
             x = x - (exp.clone() - self.0.clone()) / exp;
         }
 
-        Some(Self(x))
+        Some(Self(x).limit_denom(1_000_000_000_000.try_into().ok().unwrap()))
     }
 
     pub fn exp(self) -> Self {
@@ -305,6 +311,37 @@ impl<T: Clone + Integer + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T> + S
 
         Self(x5)
     }
+
+    pub fn atan(&self) -> Self {
+        if self.0.is_negative() {
+            return -Self(-self.0.clone()).atan();
+        }
+
+        let num = Ratio::new(17.try_into().ok().unwrap(), 10.try_into().ok().unwrap()) * &self.0;
+        let den = Ratio::new(23.try_into().ok().unwrap(), 20.try_into().ok().unwrap()) + &self.0;
+        Self(num / den)
+    }
+
+    pub fn atan2(&self, x: &Self) -> Self {
+        if x.is_zero() || self.is_zero() {
+            return Self::zero();
+        }
+
+        let pi = Self(Ratio::new_raw(
+            312689.try_into().ok().unwrap(),
+            99532.try_into().ok().unwrap(),
+        ));
+
+        let atan = (self.clone() / x.clone()).atan();
+
+        if x >= &Self::zero() {
+            atan
+        } else if self >= &Self::zero() {
+            atan + pi
+        } else {
+            atan - pi
+        }
+    }
 }
 
 fn exp_corr<T: Clone + Integer + TryFrom<u64> + Pow<u64, Output = T>>(r: Ratio<T>) -> Ratio<T> {
@@ -357,15 +394,15 @@ impl<
             ("sin", 1) => Ok(args[0].sin()),
             ("cos", 1) => Ok(args[0].cos()),
             ("tan", 1) => Ok(args[0].tan()),
-            // ("asin", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).asin()))),
-            // ("acos", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).acos()))),
-            // ("atan", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).atan()))),
+            // ("arcsin", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).asin()))),
+            // ("arccos", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).acos()))),
+            ("arctan", 1) => Ok(args[0].atan()),
             // ("sinh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).sinh()))),
             // ("cosh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).cosh()))),
             // ("tanh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).tanh()))),
-            // ("asinh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).asinh()))),
-            // ("acosh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).acosh()))),
-            // ("atanh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).atanh()))),
+            // ("arcsinh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).asinh()))),
+            // ("arccosh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).acosh()))),
+            // ("arctanh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).atanh()))),
             _ => Err(()),
         }
     }

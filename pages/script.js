@@ -9,6 +9,13 @@ const EVALUATES = {
 };
 
 document.addEventListener("DOMContentLoaded", (_) => {
+	const INPUT = document.getElementById("input");
+	const OUTPUT = document.getElementById("result");
+	const SHARE_URL = document.getElementById("share_url");
+	const SELECTOR = document.getElementById("type_selector");
+	const AUTO_EVAL = document.getElementById("auto_eval");
+	const EVAL_BTN = document.getElementById("eval_btn");
+
 	document.body.style.visibility = 'visible';
 
 	function update() {
@@ -24,10 +31,6 @@ document.addEventListener("DOMContentLoaded", (_) => {
 		SHARE_URL.innerText = `${window.location.protocol}//${window.location.host}${window.location.pathname}#${typ}-${btoa(INPUT.value)}`;
 	}
 
-	const INPUT = document.getElementById("input");
-	const OUTPUT = document.getElementById("result");
-	const SHARE_URL = document.getElementById("share_url");
-
 	let expr = window.location.hash.slice(1).split("-", 2)[1];
 	if (expr !== undefined) {
 		try {
@@ -39,12 +42,17 @@ document.addEventListener("DOMContentLoaded", (_) => {
 		// bindings.enable_panic_hook();
 		update();
 	});
-	INPUT.oninput = (_) => { update(); };
+	INPUT.oninput = (_) => {
+		if (AUTO_EVAL.value) {
+			update();
+		}
+	};
 	window.onhashchange = update;
 
-	const SELECTOR = document.getElementById("type_selector");
 	SELECTOR.value = window.location.hash.slice(1).split("-", 1)[0];
 	SELECTOR.onchange = (_) => {
 		window.location.hash = SELECTOR.value;
 	};
+
+	EVAL_BTN.onclick = update;
 });

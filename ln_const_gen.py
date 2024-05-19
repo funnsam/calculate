@@ -4,7 +4,7 @@ from fractions import Fraction
 acc = 1e10
 
 s = 65536
-u = 128
+u = 1024
 
 def m(x):
     return (x - 1) / (x + 1)
