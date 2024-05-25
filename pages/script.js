@@ -8,6 +8,16 @@ const EVALUATES = {
     cmplx: bindings.evaluate_cmplx_rational,
 };
 
+let katex = undefined;
+
+const QUERY = new URLSearchParams(window.location.search);
+if (QUERY.get("katex") == 1) {
+    const {
+        default: kt,
+    } = await import("https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.mjs");
+    katex = kt;
+}
+
 document.addEventListener("DOMContentLoaded", (_) => {
     const INPUT = document.getElementById("input");
     const OUTPUT = document.getElementById("result");
@@ -25,7 +35,11 @@ document.addEventListener("DOMContentLoaded", (_) => {
         }
 
         // sanitization should be done in rust side
-        OUTPUT.innerHTML = evaluate(INPUT.value);
+        let eval = evaluate(INPUT.value);
+        OUTPUT.innerHTML = eval.output;
+
+        if (katex !== undefined) {
+        }
 
         let typ = window.location.hash.slice(1).split("-", 1)[0];
         SHARE_URL.innerText = `${window.location.protocol}//${window.location.host}${window.location.pathname}#${typ}-${btoa(INPUT.value)}`;

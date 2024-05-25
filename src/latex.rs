@@ -6,7 +6,7 @@ pub struct LatexDisplay<'a, T> {
     pub src: &'a str,
 }
 
-impl<T: fmt::Display> fmt::Display for LatexDisplay<'_, T> {
+impl<T> fmt::Display for LatexDisplay<'_, T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.node.kind {
             NodeKind::Number(_) => write!(f, "{}", &self.src[self.node.span.clone()]),
