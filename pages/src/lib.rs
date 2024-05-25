@@ -26,16 +26,29 @@ fn report(src: &str, err: Error) -> String {
     )
 }
 
-fn evaluate<T: ComputableNumeral>(s: &str) -> Result<EvalMid<T>, String> {
-    to_nodes::<T>(s)
-        .map_err(|e| report(s, e))
-        .and_then(|n| Ok(EvalMid {
-            output: n.evaluate().map_err(|e| report(s, e))?,
-            latex: latex::LatexDisplay {
-                node: &n,
-                src: s,
-            }.to_string()
-        }))
+fn evaluate<T: ComputableNumeral, F: Fn(T) -> String>(s: &str, f: F) -> Eval {
+    match to_nodes::<T>(s) {
+        Ok(n) => match n.evaluate() {
+            Ok(v) => Eval {
+                output: format!("= {}", f(v)),
+                latex: latex::LatexDisplay {
+                    node: &n,
+                    src: s,
+                }.to_string(),
+            },
+            Err(e) => Eval {
+                output: report(s, e),
+                latex: latex::LatexDisplay {
+                    node: &n,
+                    src: s,
+                }.to_string(),
+            },
+        },
+        Err(e) => Eval {
+            output: report(s, e),
+            latex: String::new(),
+        }
+    }
 }
 
 // #[wasm_bindgen]
@@ -54,17 +67,17 @@ pub struct Eval {
 
 #[wasm_bindgen]
 pub fn evaluate_f32(s: &str) -> Eval {
-    pretty_result(evaluate::<f32>(s), |a| trunc(&format!("{a:.5}")).to_string())
+    evaluate::<f32, _>(s, |a| trunc(&format!("{a:.5}")).to_string())
 }
 
 #[wasm_bindgen]
 pub fn evaluate_f64(s: &str) -> Eval {
-    pretty_result(evaluate::<f64>(s), |a| trunc(&format!("{a:.13}")).to_string())
+    evaluate::<f64, _>(s, |a| trunc(&format!("{a:.13}")).to_string())
 }
 
 #[wasm_bindgen]
 pub fn evaluate_rational(s: &str) -> Eval {
-    pretty_result(evaluate::<rational::Rational<BigInt>>(s), |a| format!("{:#}", a.limit_denom(1_000_000_000_000_000_u64.into())))
+    evaluate::<rational::Rational<BigInt>, _>(s, |a| format!("{:#}", a.limit_denom(1_000_000_000_000_000_u64.into())))
 }
 
 /*
@@ -86,20 +99,7 @@ pub fn evaluate_cmplx_f64(s: &str) -> String {
 
 #[wasm_bindgen]
 pub fn evaluate_cmplx_rational(s: &str) -> Eval {
-    pretty_result(evaluate::<rational::complex::ComplexRational<BigInt>>(s), |a| format!("{:#}", a.limit_denom(1_000_000_000_000_000_u64.into())))
-}
-
-fn pretty_result<T, F: Fn(T) -> String>(e: Result<EvalMid<T>, String>, f: F) -> Eval {
-    match e {
-        Ok(e) => Eval {
-            output: format!("= {}", sanitize(&f(e.output))),
-            latex: e.latex,
-        },
-        Err(e) => Eval {
-            output: e,
-            latex: String::new(),
-        }
-    }
+    evaluate::<rational::complex::ComplexRational<BigInt>, _>(s, |a| format!("{:#}", a.limit_denom(1_000_000_000_000_000_u64.into())))
 }
 
 fn pretty_cmplx<T: num_traits::Float + num_traits::Signed, F: Fn(T) -> String>(
