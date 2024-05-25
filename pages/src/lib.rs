@@ -54,11 +54,6 @@ fn evaluate<T: ComputableNumeral, F: Fn(T) -> String>(s: &str, f: F) -> Eval {
 // #[wasm_bindgen]
 // pub fn enable_panic_hook() { std::panic::set_hook(Box::new(console_error_panic_hook::hook)); }
 
-pub struct EvalMid<T> {
-    pub output: T,
-    pub latex: String,
-}
-
 #[wasm_bindgen(getter_with_clone)]
 pub struct Eval {
     pub output: String,
