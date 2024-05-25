@@ -292,24 +292,25 @@ impl<T: Clone + Integer + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T> + S
     }
 
     pub fn tan(&self) -> Self {
-        let pi = Ratio::new_raw(
-            312689.try_into().ok().unwrap(),
-            99532.try_into().ok().unwrap(),
-        );
-        let halfpi = Ratio::new_raw(
-            312689.try_into().ok().unwrap(),
-            199064.try_into().ok().unwrap(),
-        );
+        self.sin() / self.cos()
+        // let pi = Ratio::new_raw(
+        //     312689.try_into().ok().unwrap(),
+        //     99532.try_into().ok().unwrap(),
+        // );
+        // let halfpi = Ratio::new_raw(
+        //     312689.try_into().ok().unwrap(),
+        //     199064.try_into().ok().unwrap(),
+        // );
 
-        let x = (self.0.clone() + halfpi.clone()) % pi - halfpi;
+        // let x = (self.0.clone() + halfpi.clone()) % pi - halfpi;
 
-        let x1 = x.clone() + x.clone().pow(3_u64) / T::try_from(3).ok().unwrap();
-        let x2 = x1 + x.clone().pow(3_u64) * T::try_from(2).ok().unwrap() / T::try_from(15).ok().unwrap();
-        let x3 = x2 + x.clone().pow(5_u64) * T::try_from(17).ok().unwrap() / T::try_from(315).ok().unwrap();
-        let x4 = x3 + x.clone().pow(7_u64) * T::try_from(62).ok().unwrap() / T::try_from(2835).ok().unwrap();
-        let x5 = x4 + x.pow(9_u64) * T::try_from(1382).ok().unwrap() / T::try_from(155925).ok().unwrap();
+        // let x1 = x.clone() + x.clone().pow(3_u64) / T::try_from(3).ok().unwrap();
+        // let x2 = x1 + x.clone().pow(3_u64) * T::try_from(2).ok().unwrap() / T::try_from(15).ok().unwrap();
+        // let x3 = x2 + x.clone().pow(5_u64) * T::try_from(17).ok().unwrap() / T::try_from(315).ok().unwrap();
+        // let x4 = x3 + x.clone().pow(7_u64) * T::try_from(62).ok().unwrap() / T::try_from(2835).ok().unwrap();
+        // let x5 = x4 + x.pow(9_u64) * T::try_from(1382).ok().unwrap() / T::try_from(155925).ok().unwrap();
 
-        Self(x5)
+        // Self(x5)
     }
 
     pub fn atan(&self) -> Self {
