@@ -35,7 +35,7 @@ jobs:
           overwrite: false
       - name: Use minified stuff
         run: |
-          ls
+          cd pages
           mv style.min.css style.css
           mv script.min.mjs script.mjs
           mv pkg/bindings.min.mjs pkg/bindings.mjs
