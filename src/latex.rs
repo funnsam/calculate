@@ -54,7 +54,7 @@ impl fmt::Display for BiOpr {
             Self::Subtract => "-",
             Self::Multiply => r"\times",
             Self::Divide => r"\div",
-            Self::Modulo => r"\mod",
+            Self::Modulo => r"\bmod",
             Self::Power => r"^",
         })
     }

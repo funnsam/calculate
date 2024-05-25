@@ -31,7 +31,7 @@ body {
     padding: var(--margin-l);
 }
 
-* {
+:not(.katex *) {
     font-family: "IBM Plex Mono", monospace;
 }
 
@@ -71,6 +71,7 @@ input:not([type=checkbox]):focus {
 pre {
     width: 100%;
     overflow: auto;
+    margin: 0;
 }
 
 #result {
@@ -99,4 +100,12 @@ body > details > div * {
 
 .report_arrow {
     color: #ffc470;
+}
+
+.displays {
+    margin: var(--margin-l) 0;
+}
+
+p {
+    margin: 0;
 }
