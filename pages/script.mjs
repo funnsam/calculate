@@ -1,4 +1,4 @@
-import init, * as bindings from "./pkg/bindings.js";
+import init, * as bindings from "./pkg/bindings.mjs";
 
 const EVALUATES = {
     f32: bindings.evaluate_f32,
