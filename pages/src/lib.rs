@@ -12,25 +12,25 @@ fn sanitize(s: &str) -> String {
         .replace('/', "&#x2F;")
 }
 
-fn report(src: &str, span: Span) -> String {
+fn report(src: &str, err: Error) -> String {
     format!(
         "\
-<span class=\"error\">Error:</span>
+<span class=\"error\">Error:</span> {}
   {}
-  <span class=\"report_arrow\">{:<2$}{3:^<4$}</span>",
+  <span class=\"report_arrow\">{:<3$}{2:^<4$}</span>",
+        err.message,
         sanitize(src),
         "",
-        span.start,
-        "",
-        span.end - span.start
+        err.location.start,
+        err.location.end - err.location.start
     )
 }
 
 fn evaluate<T: ComputableNumeral>(s: &str) -> Result<T, String> {
     Ok(to_nodes::<T>(s)
-        .map_err(|span| report(s, span))?
+        .map_err(|e| report(s, e))?
         .evaluate()
-        .map_err(|span| report(s, span))?)
+        .map_err(|e| report(s, e))?)
 }
 
 // #[wasm_bindgen]

@@ -6,15 +6,19 @@ pub mod traits;
 #[cfg(feature = "num_rational")]
 pub mod rational;
 
+pub mod error;
+pub use error::*;
+pub mod latex;
+
 use alloc::{boxed::Box, string::ToString};
 use traits::*;
 
 /// A span in `char`s
 pub type Span = core::ops::Range<usize>;
 
-type PeekingLexer<'src, Number> = Peeking<Lexer<'src, Number>, Result<Token<Number>, Span>>;
+type PeekingLexer<'src, Number> = Peeking<Lexer<'src, Number>, Result<Token<Number>, Error>>;
 
-pub fn to_nodes<T: Clone + Numeral>(s: &str) -> Result<Node<T>, Span> {
+pub fn to_nodes<T: Clone + Numeral>(s: &str) -> Result<Node<T>, Error> {
     let lex = Lexer::<T> {
         source: s.chars(),
         start_index: 0,
@@ -28,7 +32,10 @@ pub fn to_nodes<T: Clone + Numeral>(s: &str) -> Result<Node<T>, Span> {
     let e = parse_expr_climb(&mut lex, 0)?;
 
     if lex.next().is_some() {
-        return Err(lex.report_span());
+        return Err(Error {
+            message: "expected end of expression",
+            location: lex.report_span(),
+        });
     }
 
     Ok(e)
@@ -37,7 +44,7 @@ pub fn to_nodes<T: Clone + Numeral>(s: &str) -> Result<Node<T>, Span> {
 fn parse_expr_climb<T: Clone + Numeral>(
     lex: &mut PeekingLexer<'_, T>,
     percedence: usize,
-) -> Result<Node<T>, Span> {
+) -> Result<Node<T>, Error> {
     let mut rest = parse_single(lex)?;
     let mut depth = 0;
 
@@ -119,10 +126,13 @@ fn add_node_right<T: Clone>(rest: &mut Node<T>, depth: usize, op: BiOpr, right: 
     rest.span.end = rse;
 }
 
-fn parse_single<T: Clone + Numeral>(lex: &mut PeekingLexer<'_, T>) -> Result<Node<T>, Span> {
+fn parse_single<T: Clone + Numeral>(lex: &mut PeekingLexer<'_, T>) -> Result<Node<T>, Error> {
     let t = lex.next();
 
-    match t.ok_or_else(|| lex.report_span())?? {
+    match t.ok_or_else(|| Error {
+        message: "unexpected end of expression",
+        location: lex.report_span(),
+    })?? {
         Token::Number(num) => Ok(Node {
             kind: NodeKind::Number(num),
             span: lex.report_span(),
@@ -137,10 +147,16 @@ fn parse_single<T: Clone + Numeral>(lex: &mut PeekingLexer<'_, T>) -> Result<Nod
                         span: sbs.start..lex.report_span().end,
                     })
                 } else {
-                    Err(lex.report_span())
+                    Err(Error {
+                        message: "bracket type mismatch",
+                        location: lex.report_span(),
+                    })
                 }
             } else {
-                Err(lex.report_span())
+                Err(Error {
+                    message: "expected vracket end",
+                    location: lex.report_span(),
+                })
             }
         },
         Token::FStart(f, k) => {
@@ -160,7 +176,10 @@ fn parse_single<T: Clone + Numeral>(lex: &mut PeekingLexer<'_, T>) -> Result<Nod
                     },
                     _ => {
                         lex.next();
-                        return Err(lex.report_span());
+                        return Err(Error {
+                            message: "expected comma or bracket end",
+                            location: lex.report_span(),
+                        });
                     },
                 }
             }
@@ -172,10 +191,16 @@ fn parse_single<T: Clone + Numeral>(lex: &mut PeekingLexer<'_, T>) -> Result<Nod
                         span: sbs.start..lex.report_span().end,
                     })
                 } else {
-                    Err(lex.report_span())
+                    Err(Error {
+                        message: "bracket type mismatch",
+                        location: lex.report_span(),
+                    })
                 }
             } else {
-                Err(lex.report_span())
+                Err(Error {
+                    message: "expected bracket end",
+                    location: lex.report_span(),
+                })
             }
         },
         Token::Operator(op) if op.unary().is_some() => {
@@ -188,7 +213,10 @@ fn parse_single<T: Clone + Numeral>(lex: &mut PeekingLexer<'_, T>) -> Result<Nod
                 span: op_span.start..expr_end,
             })
         },
-        _ => Err(lex.report_span()),
+        _ => Err(Error {
+            message: "did not expect this",
+            location: lex.report_span(),
+        }),
     }
 }
 
@@ -280,20 +308,20 @@ impl BiOpr {
     }
 
     #[cfg(feature = "any_num")]
-    fn operate<F: ComputableNumeral>(self, l: F, r: F) -> Option<F> {
+    fn operate<F: ComputableNumeral>(self, l: F, r: F) -> Result<F, &'static str> {
         match self {
-            Self::Add => Some(l + r),
-            Self::Subtract => Some(l - r),
-            Self::Multiply => Some(l * r),
+            Self::Add => Ok(l + r),
+            Self::Subtract => Ok(l - r),
+            Self::Multiply => Ok(l * r),
             Self::Divide => {
                 if !r.is_zero() {
-                    Some(l / r)
+                    Ok(l / r)
                 } else {
-                    None
+                    Err("division by zero")
                 }
             },
-            Self::Modulo => Some(l % r),
-            Self::Power => Some(l.pow(r)),
+            Self::Modulo => Ok(l % r),
+            Self::Power => Ok(l.pow(r)),
         }
     }
 }
@@ -314,10 +342,10 @@ impl UnOpr {
     }
 
     #[cfg(feature = "any_num")]
-    fn operate<F: ComputableNumeral>(self, v: F) -> Option<F> {
+    fn operate<F: ComputableNumeral>(self, v: F) -> Result<F, &'static str> {
         match self {
-            Self::Plus => Some(v),
-            Self::Minus => Some(-v),
+            Self::Plus => Ok(v),
+            Self::Minus => Ok(-v),
         }
     }
 }
@@ -335,12 +363,16 @@ impl Node<f32> {
 
 #[cfg(feature = "any_num")]
 impl<F: ComputableNumeral> Node<F> {
-    pub fn evaluate(&self) -> Result<F, Span> {
+    pub fn evaluate(&self) -> Result<F, Error> {
         match &self.kind {
-            NodeKind::BiOp(l, op, r) => op
-                .operate(l.evaluate()?, r.evaluate()?)
-                .ok_or_else(|| self.span.clone()),
-            NodeKind::UnOp(op, v) => op.operate(v.evaluate()?).ok_or_else(|| self.span.clone()),
+            NodeKind::BiOp(l, op, r) => op.operate(l.evaluate()?, r.evaluate()?).map_err(|message| Error {
+                message,
+                location: self.span.clone(),
+            }),
+            NodeKind::UnOp(op, v) => op.operate(v.evaluate()?).map_err(|message| Error {
+                message,
+                location: self.span.clone(),
+            }),
             NodeKind::Number(v) => Ok(v.clone()),
             NodeKind::Function(f, a) => {
                 let mut av = Vec::with_capacity(a.len());
@@ -348,7 +380,10 @@ impl<F: ComputableNumeral> Node<F> {
                     av.push(i.evaluate()?);
                 }
 
-                F::execute(f, &av).map_err(|_| self.span.clone())
+                F::execute(f, &av).map_err(|message| Error {
+                    message,
+                    location: self.span.clone(),
+                })
             },
         }
     }
@@ -381,9 +416,9 @@ struct Lexer<'src, Number> {
 }
 
 impl<Number: Numeral> Iterator for Lexer<'_, Number> {
-    type Item = Result<Token<Number>, Span>;
+    type Item = Result<Token<Number>, Error>;
 
-    fn next(&mut self) -> Option<Result<Token<Number>, Span>> {
+    fn next(&mut self) -> Option<Result<Token<Number>, Error>> {
         self.start_index = self.current_idx;
         let c = self.next_char()?;
 
@@ -411,7 +446,10 @@ impl<Number: Numeral> Iterator for Lexer<'_, Number> {
 
                 Some(
                     acc.parse()
-                        .map_or_else(|_| Err(self.report_span()), |a| Ok(Token::Number(a))),
+                        .map_or_else(|_| Err(Error {
+                            message: "number format is incorrect",
+                            location: self.report_span(),
+                        }), |a| Ok(Token::Number(a))),
                 )
             },
             _ if c.is_whitespace() => self.next(),
@@ -436,12 +474,16 @@ impl<Number: Numeral> Iterator for Lexer<'_, Number> {
 
                     s.push(c);
 
-                    if let Some(c) = Number::from_constant(repl_greeks(&s)) {
+                    let s = repl_greeks(&s);
+                    if let Some(c) = Number::from_constant(s) {
                         return Some(Ok(Token::Number(c)));
                     }
                 }
 
-                Some(Err(self.report_span()))
+                Some(Err(Error {
+                    message: "this constant is not supported",
+                    location: self.report_span(),
+                }))
             },
         }
     }

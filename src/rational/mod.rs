@@ -372,7 +372,7 @@ impl<
         T: Clone + Integer + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T> + Signed + ToPrimitive,
     > ExecuteFunction for Rational<T>
 {
-    fn execute(f: &str, args: &[Self]) -> Result<Self, ()> {
+    fn execute(f: &str, args: &[Self]) -> Result<Self, &'static str> {
         match (f, args.len()) {
             ("floor", 1) => Ok(Self(args[0].0.floor())),
             ("ceil", 1) => Ok(Self(args[0].0.ceil())),
@@ -383,11 +383,11 @@ impl<
             ("sqrt" | "√", 1) => Ok(args[0]
                 .clone()
                 .pow(Self(Ratio::new(T::one(), T::one() + T::one())))),
-            ("ln", 1) => args[0].clone().ln().ok_or(()),
+            ("ln", 1) => args[0].clone().ln().ok_or("`ln` math error"),
             // ("log", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).log10()))),
             // ("log", 2) => Ok(Self(from_f64!(to_f64!(args[0].0).log(to_f64!(args[0].0))))),
-            ("min", _) => Ok(Self(args.iter().map(|a| a.0.clone()).min().ok_or(())?)),
-            ("max", _) => Ok(Self(args.iter().map(|a| a.0.clone()).max().ok_or(())?)),
+            ("min", _) => Ok(Self(args.iter().map(|a| a.0.clone()).min().ok_or("expected ≥1 arguments")?)),
+            ("max", _) => Ok(Self(args.iter().map(|a| a.0.clone()).max().ok_or("expected ≥1 arguments")?)),
             ("cbrt" | "∛", 1) => Ok(args[0]
                 .clone()
                 .pow(Self(Ratio::new(T::one(), T::one() + T::one() + T::one())))),
@@ -403,7 +403,7 @@ impl<
             // ("arcsinh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).asinh()))),
             // ("arccosh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).acosh()))),
             // ("arctanh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).atanh()))),
-            _ => Err(()),
+            _ => Err("function not supported"),
         }
     }
 }

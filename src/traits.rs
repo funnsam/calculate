@@ -78,15 +78,15 @@ pub trait ExecuteFunction
 where
     Self: Sized,
 {
-    fn execute(f: &str, args: &[Self]) -> Result<Self, ()>;
+    fn execute(f: &str, args: &[Self]) -> Result<Self, &'static str>;
 }
 
 macro_rules! map_fn {
     ($type: ty: $($n: pat $(= $ac: tt => $map: tt ($($th: tt)*))? $(=> $f: expr)?),* $(,)?) => {
         impl ExecuteFunction for $type {
-            fn execute(f: &str, args: &[Self]) -> Result<Self, ()> {
-                fn check(v: $type) -> Result<$type, ()> {
-                    v.is_finite().then_some(v).ok_or(())
+            fn execute(f: &str, args: &[Self]) -> Result<Self, &'static str> {
+                fn check(v: $type) -> Result<$type, &'static str> {
+                    v.is_finite().then_some(v).ok_or("number is not finite")
                 }
 
                 match (f, args.len()) {
@@ -94,7 +94,7 @@ macro_rules! map_fn {
                         $(($n, $ac) => check(Self::$map($(args[$th]),*)),)?
                         $(($n, _) => $f(args),)?
                     )*
-                    _ => Err(()),
+                    _ => Err("function not supported"),
                 }
             }
         }
@@ -122,12 +122,12 @@ map_fns!(
     "min" => |args: &[_]| if args.len() != 0 {
         Ok(args.iter().fold(Self::INFINITY, |a, &b| a.min(b)))
     } else {
-        Err(())
+        Err("expect ≥1 arguments")
     },
     "max" => |args: &[_]| if args.len() != 0 {
         Ok(args.iter().fold(Self::NEG_INFINITY, |a, &b| a.max(b)))
     } else {
-        Err(())
+        Err("expect ≥1 arguments")
     },
     "cbrt" | "∛" = 1 => cbrt(0),
     "sin" = 1 => sin(0),

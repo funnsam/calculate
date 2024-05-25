@@ -192,15 +192,15 @@ impl<
             + Pow<u64, Output = T>,
     > ExecuteFunction for ComplexRational<T>
 {
-    fn execute(f: &str, args: &[Self]) -> Result<Self, ()> {
+    fn execute(f: &str, args: &[Self]) -> Result<Self, &'static str> {
         match (f, args.len()) {
             ("conj", 1) => Ok(Self(Complex::new(
                 args[0].0.re.clone(),
                 -args[0].0.im.clone(),
             ))),
-            ("ln", 1) => Ok(args[0].clone().ln().ok_or(())?),
+            ("ln", 1) => Ok(args[0].clone().ln().ok_or("`ln` math error")?),
             ("exp", 1) => Ok(args[0].clone().exp()),
-            _ => Err(()),
+            _ => Err("function not supported"),
         }
     }
 }
