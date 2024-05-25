@@ -32,7 +32,8 @@ jobs:
       - name: Minify website
         uses: nizarmah/auto-minify@v3.0.0
         with:
-          overwrite: false
+          overwrite: true
+          js_engine: "uglify-js"
       - name: Use minified stuff
         run: |
           cd pages
