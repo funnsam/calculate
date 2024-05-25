@@ -34,13 +34,6 @@ jobs:
         with:
           overwrite: true
           js_engine: "uglify-js"
-      # - name: Use minified stuff
-      #   run: |
-      #     cd pages
-      #     ls
-      #     mv style.min.css style.css
-      #     mv script.min.mjs script.mjs
-      #     mv pkg/bindings.min.mjs pkg/bindings.mjs
       - name: Upload page
         uses: actions/upload-pages-artifact@v3
         with:

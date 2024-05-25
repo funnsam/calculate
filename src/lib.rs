@@ -154,7 +154,7 @@ fn parse_single<T: Clone + Numeral>(lex: &mut PeekingLexer<'_, T>) -> Result<Nod
                 }
             } else {
                 Err(Error {
-                    message: "expected vracket end",
+                    message: "expected bracket end",
                     location: lex.report_span(),
                 })
             }
