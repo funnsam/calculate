@@ -153,8 +153,6 @@ impl<
         T: Clone + Integer + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T> + Signed + ToPrimitive,
     > Pow<Self> for Rational<T>
 {
-    // impl<T:std::fmt::Debug+ Clone + Integer + ToPrimitive + Signed + From<i64> + TryTryInto<u64>
-    // + Pow<u64, Output = T>> Pow<Self> for Rational<T> {
     type Output = Self;
 
     fn pow(self, exp: Self) -> Self {
@@ -179,7 +177,14 @@ impl<
             ));
         }
 
-        (exp * Self(self.0.abs()).ln().unwrap()).exp()
+        if exp.0.numer().is_odd() && exp.0.denom().is_even() && self.0.is_negative() {
+            panic!("invalid exp");
+        } else {
+            let inv = exp.0.numer().is_odd() && exp.0.denom().is_odd() && self.0.is_negative();
+            let r = (Self(self.0.abs()).ln().unwrap() * exp).exp();
+
+            if inv { -r } else { r }
+        }
     }
 }
 
