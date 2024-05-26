@@ -10,6 +10,15 @@ const EVALUATES = {
 
 let katex = undefined;
 
+// https://developer.mozilla.org/en-US/docs/Glossary/Base64#the_unicode_problem
+function utf8_to_b64( str ) {
+    return window.btoa(unescape(encodeURIComponent( str )));
+}
+
+function b64_to_utf8( str ) {
+    return decodeURIComponent(escape(window.atob( str )));
+}
+
 document.addEventListener("DOMContentLoaded", async (_) => {
     const QUERY = new URLSearchParams(window.location.search);
 
@@ -59,13 +68,14 @@ document.addEventListener("DOMContentLoaded", async (_) => {
         }
 
         let typ = window.location.hash.slice(1).split("-", 1)[0];
-        SHARE_URL.innerText = `${window.location.protocol}//${window.location.host}${window.location.pathname}${window.location.search}#${typ}-${btoa(INPUT.value)}`;
+        let s = utf8_to_b64(INPUT.value);
+        SHARE_URL.innerText = `${window.location.protocol}//${window.location.host}${window.location.pathname}${window.location.search}#${typ}-${s}`;
     }
 
     let expr = window.location.hash.slice(1).split("-", 2)[1];
     if (expr !== undefined) {
         try {
-            INPUT.value = atob(expr);
+            INPUT.value = b64_to_utf8(expr);
         } catch {}
     }
 

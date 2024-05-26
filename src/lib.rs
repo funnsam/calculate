@@ -13,7 +13,7 @@ pub mod latex;
 use alloc::{boxed::Box, string::ToString};
 use traits::*;
 
-/// A span in `char`s
+/// A range in bytes
 pub type Span = core::ops::Range<usize>;
 
 type PeekingLexer<'src, Number> = Peeking<Lexer<'src, Number>, Result<Token<Number>, Error>>;
@@ -568,12 +568,13 @@ fn repl_greeks(s: &str) -> &str {
 impl<Number> Lexer<'_, Number> {
     fn next_char(&mut self) -> Option<char> {
         if self.skipped.is_some() {
-            self.current_idx += 1;
-            return core::mem::take(&mut self.skipped);
+            let c = core::mem::take(&mut self.skipped);
+            self.current_idx += c.unwrap().len_utf8();
+            return c;
         }
 
         self.source.next().map(|a| {
-            self.current_idx += 1;
+            self.current_idx += a.len_utf8();
             a
         })
     }
