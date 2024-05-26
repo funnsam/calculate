@@ -330,7 +330,7 @@ impl<T: Clone + Integer + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T> + S
     }
 
     pub fn atan2(&self, x: &Self) -> Self {
-        if x.is_zero() || self.is_zero() {
+        if x.is_zero() && self.is_zero() {
             return Self::zero();
         }
 
@@ -404,6 +404,7 @@ impl<
             // ("arcsin", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).asin()))),
             // ("arccos", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).acos()))),
             ("arctan", 1) => Ok(args[0].atan()),
+            ("arctan2", 2) => Ok(args[0].atan2(&args[1])),
             // ("sinh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).sinh()))),
             // ("cosh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).cosh()))),
             // ("tanh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).tanh()))),

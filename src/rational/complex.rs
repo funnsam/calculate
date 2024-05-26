@@ -103,8 +103,7 @@ impl<
             return Self::one();
         }
 
-        // TODO: make ln not fail
-        (exp * self.ln().unwrap()).exp()
+        (exp * self.ln()).exp()
     }
 }
 
@@ -148,9 +147,9 @@ impl<
         )
     }
 
-    pub fn ln(self) -> Option<Self> {
+    pub fn ln(self) -> Self {
         let (r, t) = self.to_polar();
-        Some(Self(Complex::new(Rational(r).ln()?.0, t)))
+        Self(Complex::new(Rational(r).ln().unwrap().0, t))
     }
 }
 
@@ -161,21 +160,42 @@ impl<T: Clone + Integer + Signed + core::fmt::Display + ToPrimitive> core::fmt::
         if self.0.im.is_zero() {
             Rational(self.0.re.clone()).fmt(f)
         } else if self.0.re.is_zero() {
-            write!(f, "{}i", Rational(self.0.im.clone()))
-        } else if !self.0.im.is_negative() {
-            write!(
-                f,
-                "{}+{}i",
-                Rational(self.0.re.clone()),
-                Rational(self.0.im.clone())
-            )
+            write!(f, "{}i", Rational(self.0.im.clone()))?;
+
+            if f.alternate() && !self.0.im.is_one() {
+                write!(f, " ({}i)", self.0.im.numer().to_f64().unwrap() / self.0.im.denom().to_f64().unwrap())
+            } else {
+                Ok(())
+            }
         } else {
-            write!(
-                f,
-                "{}-{}i",
-                Rational(self.0.re.clone()),
-                Rational(self.0.im.abs().clone())
-            )
+            if !self.0.im.is_negative() {
+                write!(
+                    f,
+                    "{}+{}i",
+                    Rational(self.0.re.clone()),
+                    Rational(self.0.im.clone())
+                )?;
+            } else {
+                write!(
+                    f,
+                    "{}-{}i",
+                    Rational(self.0.re.clone()),
+                    Rational(self.0.im.abs().clone())
+                )?;
+            }
+
+            if f.alternate() && !self.0.re.denom().is_one() || !self.0.im.denom().is_one() {
+                let re = self.0.re.numer().to_f64().unwrap() / self.0.re.denom().to_f64().unwrap();
+                let im = self.0.im.numer().to_f64().unwrap() / self.0.im.denom().to_f64().unwrap();
+
+                if !im.is_sign_negative() {
+                    write!(f, " ({re}+{im}i)")
+                } else {
+                    write!(f, " ({re}-{}i)", im.abs())
+                }
+            } else {
+                Ok(())
+            }
         }
     }
 }
@@ -198,7 +218,7 @@ impl<
                 args[0].0.re.clone(),
                 -args[0].0.im.clone(),
             ))),
-            ("ln", 1) => Ok(args[0].clone().ln().ok_or("`ln` math error")?),
+            ("ln", 1) => Ok(args[0].clone().ln()),
             ("exp", 1) => Ok(args[0].clone().exp()),
             _ => Err("function not supported"),
         }
