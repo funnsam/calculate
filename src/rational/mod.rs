@@ -330,14 +330,14 @@ impl<T: Clone + Integer + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T> + S
     }
 
     pub fn atan2(&self, x: &Self) -> Self {
-        if x.is_zero() && self.is_zero() {
-            return Self::zero();
-        }
-
         let pi = Self(Ratio::new_raw(
             312689.try_into().ok().unwrap(),
             99532.try_into().ok().unwrap(),
         ));
+
+        if x.is_zero() {
+            return Self((pi.0 / (T::one() + T::one())) * self.0.signum());
+        }
 
         let atan = (self.clone() / x.clone()).atan();
 
@@ -390,21 +390,21 @@ impl<
             ("sqrt" | "√", 1) => Ok(args[0]
                 .clone()
                 .pow(Self(Ratio::new(T::one(), T::one() + T::one())))),
+            ("cbrt" | "∛", 1) => Ok(args[0]
+                .clone()
+                .pow(Self(Ratio::new(T::one(), T::one() + T::one() + T::one())))),
             ("ln", 1) => args[0].clone().ln().ok_or("`ln` math error"),
             // ("log", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).log10()))),
             // ("log", 2) => Ok(Self(from_f64!(to_f64!(args[0].0).log(to_f64!(args[0].0))))),
             ("min", _) => Ok(Self(args.iter().map(|a| a.0.clone()).min().ok_or("expected ≥1 arguments")?)),
             ("max", _) => Ok(Self(args.iter().map(|a| a.0.clone()).max().ok_or("expected ≥1 arguments")?)),
-            ("cbrt" | "∛", 1) => Ok(args[0]
-                .clone()
-                .pow(Self(Ratio::new(T::one(), T::one() + T::one() + T::one())))),
             ("sin", 1) => Ok(args[0].sin()),
             ("cos", 1) => Ok(args[0].cos()),
             ("tan", 1) => Ok(args[0].tan()),
             // ("arcsin", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).asin()))),
             // ("arccos", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).acos()))),
             ("arctan", 1) => Ok(args[0].atan()),
-            ("arctan2", 2) => Ok(args[0].atan2(&args[1])),
+            ("arctan2", 2) => Ok(args[1].atan2(&args[0])),
             // ("sinh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).sinh()))),
             // ("cosh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).cosh()))),
             // ("tanh", 1) => Ok(Self(from_f64!(to_f64!(args[0].0).tanh()))),

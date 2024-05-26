@@ -82,7 +82,7 @@ where
 }
 
 macro_rules! map_fn {
-    ($type: ty: $($n: pat $(= $ac: tt => $map: tt ($($th: tt)*))? $(=> $f: expr)?),* $(,)?) => {
+    ($type: ty: $($n: pat $(= $ac: tt => $map: tt ($($th: tt $th2: tt),*))? $(=> $f: expr)?),* $(,)?) => {
         impl ExecuteFunction for $type {
             fn execute(f: &str, args: &[Self]) -> Result<Self, &'static str> {
                 fn check(v: $type) -> Result<$type, &'static str> {
@@ -91,7 +91,7 @@ macro_rules! map_fn {
 
                 match (f, args.len()) {
                     $(
-                        $(($n, $ac) => check(Self::$map($(args[$th]),*)),)?
+                        $(($n, $ac) => check(Self::$map($(emit!(args, $th $th2)),*).into()),)?
                         $(($n, _) => $f(args),)?
                     )*
                     _ => Err("function not supported"),
@@ -101,45 +101,89 @@ macro_rules! map_fn {
     };
 }
 
+macro_rules! emit {
+    ($a: tt, $n: tt .) => { $a[$n] };
+    ($a: tt, &$n: tt) => { &$a[$n] };
+}
+
 macro_rules! map_fns {
-    ($($t: tt)*) => {
+    (f $($t: tt)*) => {
         map_fn!(f32: $($t)*);
         map_fn!(f64: $($t)*);
     };
+    (c $($t: tt)*) => {
+        map_fn!(num_complex::Complex<f32>: $($t)*);
+        map_fn!(num_complex::Complex<f64>: $($t)*);
+    };
 }
 
-map_fns!(
-    "floor" = 1 => floor(0),
-    "ceil" = 1 => ceil(0),
-    "round" = 1 => round(0),
-    "trunc" = 1 => trunc(0),
-    "fract" = 1 => fract(0),
-    "abs" = 1 => abs(0),
-    "sqrt" | "√" = 1 => sqrt(0),
-    "ln" = 1 => ln(0),
-    "log" = 1 => log10(0),
-    "log" = 2 => log(0 1),
-    "min" => |args: &[_]| if args.len() != 0 {
+map_fns!(f
+    "floor" = 1 => floor(0 .),
+    "ceil" = 1 => ceil(0 .),
+    "round" = 1 => round(0 .),
+    "trunc" = 1 => trunc(0 .),
+    "fract" = 1 => fract(0 .),
+    "abs" = 1 => abs(0 .),
+    "sqrt" | "√" = 1 => sqrt(0 .),
+    "ln" = 1 => ln(0 .),
+    "log" = 1 => log10(0 .),
+    "log" = 2 => log(0 ., 1 .),
+    "min" => |args: &[Self]| if args.len() != 0 {
         Ok(args.iter().fold(Self::INFINITY, |a, &b| a.min(b)))
     } else {
         Err("expect ≥1 arguments")
     },
-    "max" => |args: &[_]| if args.len() != 0 {
+    "max" => |args: &[Self]| if args.len() != 0 {
         Ok(args.iter().fold(Self::NEG_INFINITY, |a, &b| a.max(b)))
     } else {
         Err("expect ≥1 arguments")
     },
-    "cbrt" | "∛" = 1 => cbrt(0),
-    "sin" = 1 => sin(0),
-    "cos" = 1 => cos(0),
-    "tan" = 1 => tan(0),
-    "arcsin" = 1 => asin(0),
-    "arccos" = 1 => acos(0),
-    "arctan" = 1 => atan(0),
-    "sinh" = 1 => sinh(0),
-    "cosh" = 1 => cosh(0),
-    "tanh" = 1 => tanh(0),
-    "arcsinh" = 1 => asinh(0),
-    "arccosh" = 1 => acosh(0),
-    "arctanh" = 1 => atanh(0),
+    "cbrt" | "∛" = 1 => cbrt(0 .),
+    "sin" = 1 => sin(0 .),
+    "cos" = 1 => cos(0 .),
+    "tan" = 1 => tan(0 .),
+    "arcsin" = 1 => asin(0 .),
+    "arccos" = 1 => acos(0 .),
+    "arctan" = 1 => atan(0 .),
+    "sinh" = 1 => sinh(0 .),
+    "cosh" = 1 => cosh(0 .),
+    "tanh" = 1 => tanh(0 .),
+    "arcsinh" = 1 => asinh(0 .),
+    "arccosh" = 1 => acosh(0 .),
+    "arctanh" = 1 => atanh(0 .),
+);
+
+#[cfg(feature = "num_complex")]
+map_fns!(c
+    "sqrt" | "√" = 1 => sqrt(0 .),
+    "ln" = 1 => ln(0 .),
+    "log" = 1 => log10(0 .),
+    "log" => |args: &[Self]| {
+        if args.len() == 2 {
+            use num_traits::Zero;
+
+            if args[1].im.is_zero() {
+                Ok(args[0].log(args[1].re))
+            } else {
+                Err("expect 2nd argument is a real number")
+            }
+        } else {
+            Err("expect 1 or 2 arguments")
+        }
+    },
+    "cbrt" | "∛" = 1 => cbrt(0 .),
+    "sin" = 1 => sin(0 .),
+    "cos" = 1 => cos(0 .),
+    "tan" = 1 => tan(0 .),
+    "arcsin" = 1 => asin(0 .),
+    "arccos" = 1 => acos(0 .),
+    "arctan" = 1 => atan(0 .),
+    "sinh" = 1 => sinh(0 .),
+    "cosh" = 1 => cosh(0 .),
+    "tanh" = 1 => tanh(0 .),
+    "arcsinh" = 1 => asinh(0 .),
+    "arccosh" = 1 => acosh(0 .),
+    "arctanh" = 1 => atanh(0 .),
+    "conj" = 1 => conj(&0),
+    "norm" = 1 => norm(0 .),
 );

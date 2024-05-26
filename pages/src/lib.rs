@@ -75,22 +75,15 @@ pub fn evaluate_rational(s: &str) -> Eval {
     evaluate::<rational::Rational<BigInt>, _>(s, |a| format!("{:#}", a.limit_denom(1_000_000_000_000_000_u64.into())))
 }
 
-/*
 #[wasm_bindgen]
-pub fn evaluate_cmplx_f32(s: &str) -> String {
-    evaluate::<Complex<f32>>(s)
-        .map(|a| pretty_cmplx(a, |a| format!("{a:.13}")))
-        .map(pretty_result)
-        .unwrap_or_else(|s| s)
+pub fn evaluate_cmplx_f32(s: &str) -> Eval {
+    evaluate::<Complex<f32>, _>(s, |a| pretty_cmplx(a, |a| trunc(&format!("{a:.5}")).to_string()))
 }
 
 #[wasm_bindgen]
-pub fn evaluate_cmplx_f64(s: &str) -> String {
-    evaluate::<Complex<f64>>(s)
-        .map(|a| pretty_cmplx(a, |a| format!("{a:.13}")))
-        .map(pretty_result)
-        .unwrap_or_else(|s| s)
-} */
+pub fn evaluate_cmplx_f64(s: &str) -> Eval {
+    evaluate::<Complex<f64>, _>(s, |a| pretty_cmplx(a, |a| trunc(&format!("{a:.13}")).to_string()))
+}
 
 #[wasm_bindgen]
 pub fn evaluate_cmplx_rational(s: &str) -> Eval {
@@ -101,7 +94,11 @@ fn pretty_cmplx<T: num_traits::Float + num_traits::Signed, F: Fn(T) -> String>(
     c: Complex<T>,
     f: F,
 ) -> String {
-    if !c.im.is_negative() {
+    if c.im.is_zero() {
+        f(c.re)
+    } else if c.re.is_zero() {
+        f(c.im) + "i"
+    } else if !c.im.is_negative() {
         format!("{}+{}i", f(c.re), f(c.im))
     } else {
         format!("{}-{}i", f(c.re), f(c.im.abs()))

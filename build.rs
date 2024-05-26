@@ -1,3 +1,4 @@
+#[cfg(feature = "num_rational")]
 use std::process::*;
 
 fn main() {

@@ -220,6 +220,12 @@ impl<
             ))),
             ("ln", 1) => Ok(args[0].clone().ln()),
             ("exp", 1) => Ok(args[0].clone().exp()),
+            ("sqrt" | "√", 1) => Ok(args[0]
+                .clone()
+                .pow(Self(Complex::new(Ratio::new(T::one(), T::one() + T::one()), Ratio::zero())))),
+            ("cbrt" | "∛", 1) => Ok(args[0]
+                .clone()
+                .pow(Self(Complex::new(Ratio::new(T::one(), T::one() + T::one() + T::one()), Ratio::zero())))),
             _ => Err("function not supported"),
         }
     }

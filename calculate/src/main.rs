@@ -1,29 +1,53 @@
 use smolcalc::*;
 
+fn evaluate<T: core::fmt::Display + traits::ComputableNumeral, F: Fn(T) -> String>(s: &str, f: F) {
+    match to_nodes::<T>(s) {
+        Ok(n) => match n.evaluate() {
+            Ok(v) => {
+                show_int(&n, s);
+                println!("= {}", f(v));
+            },
+            Err(e) => {
+                show_int(&n, s);
+                report(s, e);
+            },
+        },
+        Err(e) => {
+            report(s, e);
+        }
+    }
+}
+
+fn report(src: &str, err: Error) {
+    println!(
+        "\
+\x1b[1;31mError:\x1b[0m {}
+  {src}
+  \x1b[1;33m{:<2$}{1:^<3$}\x1b[0m",
+        err.message,
+        "",
+        err.location.start,
+        err.location.end - err.location.start
+    )
+}
+
+pub struct Eval {
+    pub output: String,
+    pub latex: String,
+}
+
 fn main() {
     let mut args = std::env::args().skip(1);
     let mode = args.next();
     let expr = args.collect::<Vec<String>>().join(" ");
 
-    let n = match mode.as_deref() {
-        Some("cmplx") => to_nodes::<rational::complex::ComplexRational<num_bigint::BigInt>>(&expr)
-            .map(|i| show_int(i, &expr))
-            .and_then(|n| n.evaluate())
-            .map(|v| v.limit_denom(1_000_000_000_000_000_u64.into()))
-            .map(|v| format!("{v:#}")),
-        Some("rat") => to_nodes::<rational::Rational<num_bigint::BigInt>>(&expr)
-            .map(|i| show_int(i, &expr))
-            .and_then(|n| n.evaluate())
-            .map(|v| v.limit_denom(1_000_000_000_000_000_u64.into()))
-            .map(|v| format!("{v:#}")),
-        Some("f32") => to_nodes::<f32>(&expr)
-            .map(|i| show_int(i, &expr))
-            .and_then(|n| n.evaluate())
-            .map(|v| trunc(&format!("{v:.5}")).to_string()),
-        Some("f64") => to_nodes::<f64>(&expr)
-            .map(|i| show_int(i, &expr))
-            .and_then(|n| n.evaluate())
-            .map(|v| trunc(&format!("{v:.13}")).to_string()),
+    match mode.as_deref() {
+        Some("f32") => evaluate::<f32, _>(&expr, |a| trunc(&format!("{a:.5}")).to_string()),
+        Some("f64") => evaluate::<f64, _>(&expr, |a| trunc(&format!("{a:.13}")).to_string()),
+        Some("rat") => evaluate::<rational::Rational<num_bigint::BigInt>, _>(&expr, |a| format!("{a:#}")),
+        Some("c32") => evaluate::<num_complex::Complex<f32>, _>(&expr, |a| pretty_cmplx(a, |a| trunc(&format!("{a:.5}")).to_string())),
+        Some("c64") => evaluate::<num_complex::Complex<f64>, _>(&expr, |a| pretty_cmplx(a, |a| trunc(&format!("{a:.13}")).to_string())),
+        Some("crat") => evaluate::<rational::complex::ComplexRational<num_bigint::BigInt>, _>(&expr, |a| format!("{a:#}")),
         Some(m) => {
             println!("\x1b[1;31mError:\x1b[0m mode `{m}` not supported!");
             std::process::exit(1);
@@ -33,22 +57,6 @@ fn main() {
             std::process::exit(1);
         },
     };
-
-    n.map_or_else(
-        |s| {
-            println!("\x1b[1;31mError:\x1b[0m {}", s.message);
-            println!("  {expr}");
-            println!(
-                "  \x1b[33m{:<1$}{0:^<2$}\x1b[0m",
-                "",
-                s.location.start,
-                s.location.end - s.location.start
-            );
-        },
-        |n| {
-            println!("= {n:#}");
-        },
-    );
 }
 
 fn trunc(s: &str) -> &str {
@@ -59,10 +67,24 @@ fn trunc(s: &str) -> &str {
     }
 }
 
-fn show_int<T: core::fmt::Display>(i: Node<T>, src: &str) -> Node<T> {
+fn show_int<T: core::fmt::Display>(i: &Node<T>, src: &str) {
     println!("\x1b[1mInput interpretation:\x1b[0m ${}$", latex::LatexDisplay {
-        node: &i,
+        node: i,
         src,
     });
-    i
+}
+
+fn pretty_cmplx<T: num_traits::Float + num_traits::Signed, F: Fn(T) -> String>(
+    c: num_complex::Complex<T>,
+    f: F,
+) -> String {
+    if c.im.is_zero() {
+        f(c.re)
+    } else if c.re.is_zero() {
+        f(c.im) + "i"
+    } else if !c.im.is_negative() {
+        format!("{}+{}i", f(c.re), f(c.im))
+    } else {
+        format!("{}-{}i", f(c.re), f(c.im.abs()))
+    }
 }
