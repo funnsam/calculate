@@ -90,6 +90,16 @@ impl<T: Clone + Integer + From<usize>> FromConstant for Rational<T> {
             "τ" => Some(Self(Ratio::new_raw(312689.into(), 49766.into()))),
             "γ" => Some(Self(Ratio::new_raw(30316449.into(), 52521875.into()))),
             "c_m/s" => Some(Self(Ratio::new_raw(299792458.into(), 1.into()))),
+
+            "½" => Some(Self(Ratio::new_raw(1.into(), 2.into()))),
+            "⅓" => Some(Self(Ratio::new_raw(1.into(), 3.into()))),
+            "¼" => Some(Self(Ratio::new_raw(1.into(), 4.into()))),
+            "⅛" => Some(Self(Ratio::new_raw(1.into(), 8.into()))),
+            "⅔" => Some(Self(Ratio::new_raw(2.into(), 3.into()))),
+            "¾" => Some(Self(Ratio::new_raw(3.into(), 4.into()))),
+            "⅜" => Some(Self(Ratio::new_raw(3.into(), 8.into()))),
+            "⅝" => Some(Self(Ratio::new_raw(5.into(), 8.into()))),
+            "⅞" => Some(Self(Ratio::new_raw(7.into(), 8.into()))),
             _ => None,
         }
     }
