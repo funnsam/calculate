@@ -319,8 +319,13 @@ impl<T: Clone + Integer + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T> + S
     }
 
     pub fn atan(&self) -> Self {
-        let num = Ratio::new(8.try_into().ok().unwrap(), 5.try_into().ok().unwrap()) * &self.0;
-        let den = Ratio::new(23.try_into().ok().unwrap(), 20.try_into().ok().unwrap()) + &self.0;
+        // https://www.desmos.com/calculator/xcayzk5v4i
+
+        let w = (-Ratio::new(T::one(), 100.try_into().ok().unwrap()) * self.0.abs() + Ratio::new(17.try_into().ok().unwrap(), 10.try_into().ok().unwrap())).max(Ratio::new(8.try_into().ok().unwrap(), 5.try_into().ok().unwrap()));
+
+        let abs = self.0.abs();
+        let num = w * &abs;
+        let den = Ratio::new(23.try_into().ok().unwrap(), 20.try_into().ok().unwrap()) + &abs;
         Self(self.0.signum()) * Self(num / den)
     }
 
