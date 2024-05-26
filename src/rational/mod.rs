@@ -319,13 +319,9 @@ impl<T: Clone + Integer + TryFrom<u64> + TryInto<u64> + Pow<u64, Output = T> + S
     }
 
     pub fn atan(&self) -> Self {
-        if self.0.is_negative() {
-            return -Self(-self.0.clone()).atan();
-        }
-
-        let num = Ratio::new(17.try_into().ok().unwrap(), 10.try_into().ok().unwrap()) * &self.0;
+        let num = Ratio::new(8.try_into().ok().unwrap(), 5.try_into().ok().unwrap()) * &self.0;
         let den = Ratio::new(23.try_into().ok().unwrap(), 20.try_into().ok().unwrap()) + &self.0;
-        Self(num / den)
+        Self(self.0.signum()) * Self(num / den)
     }
 
     pub fn atan2(&self, x: &Self) -> Self {
