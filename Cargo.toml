@@ -20,5 +20,13 @@ std = []
 num_rational = ["dep:num-rational", "dep:num-integer"]
 
 [profile.release]
-opt-level = 3
+panic = "abort"
 lto = true
+opt-level = 3
+strip = true
+codegen-units = 1
+
+[profile.web_release]
+inherits = "release"
+opt-level = "z"
+strip = "debuginfo"
