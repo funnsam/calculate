@@ -91,14 +91,30 @@ impl<T: Clone + Integer + From<usize>> FromConstant for Rational<T> {
             "γ" => Some(Self(Ratio::new_raw(30316449.into(), 52521875.into()))),
             "c_m/s" => Some(Self(Ratio::new_raw(299792458.into(), 1.into()))),
 
+            "↉" => Some(Self(Ratio::zero())),
+
             "½" => Some(Self(Ratio::new_raw(1.into(), 2.into()))),
             "⅓" => Some(Self(Ratio::new_raw(1.into(), 3.into()))),
             "¼" => Some(Self(Ratio::new_raw(1.into(), 4.into()))),
+            "⅕" => Some(Self(Ratio::new_raw(1.into(), 5.into()))),
+            "⅙" => Some(Self(Ratio::new_raw(1.into(), 6.into()))),
+            "⅐" => Some(Self(Ratio::new_raw(1.into(), 7.into()))),
             "⅛" => Some(Self(Ratio::new_raw(1.into(), 8.into()))),
+            "⅑" => Some(Self(Ratio::new_raw(1.into(), 9.into()))),
+            "⅒" => Some(Self(Ratio::new_raw(1.into(), 10.into()))),
+
             "⅔" => Some(Self(Ratio::new_raw(2.into(), 3.into()))),
+            "⅖" => Some(Self(Ratio::new_raw(2.into(), 5.into()))),
+
             "¾" => Some(Self(Ratio::new_raw(3.into(), 4.into()))),
+            "⅗" => Some(Self(Ratio::new_raw(3.into(), 5.into()))),
             "⅜" => Some(Self(Ratio::new_raw(3.into(), 8.into()))),
+
+            "⅘" => Some(Self(Ratio::new_raw(4.into(), 5.into()))),
+
+            "⅚" => Some(Self(Ratio::new_raw(5.into(), 6.into()))),
             "⅝" => Some(Self(Ratio::new_raw(5.into(), 8.into()))),
+
             "⅞" => Some(Self(Ratio::new_raw(7.into(), 8.into()))),
             _ => None,
         }

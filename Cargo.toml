@@ -19,5 +19,6 @@ num_complex = ["dep:num-complex"]
 std = []
 num_rational = ["dep:num-rational", "dep:num-integer"]
 
-[profile.release.package.bindings]
-opt-level = "z"
+[profile.release]
+opt-level = 3
+lto = true
