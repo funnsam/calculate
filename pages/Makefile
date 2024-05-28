@@ -1,6 +1,6 @@
+# do `cargo install wasm-bindgen-cli` before `make`
 build:
-	wasm-pack build --target web --profile web_release
-	mv ./pkg/bindings_bg.wasm ./pkg/tmp.wasm
-	wasm-opt --strip-debug -Oz -o ./pkg/bindings_bg.wasm ./pkg/tmp.wasm
-	rm ./pkg/.gitignore
-	rm ./pkg/tmp.wasm
+	- mkdir target
+	cargo build --lib --target wasm32-unknown-unknown --profile web_release --target-dir target
+	wasm-bindgen --web --out-dir pkg --no-typescript target/wasm32-unknown-unknown/web_release/bindings.wasm
+	wasm-opt --strip-debug -Oz -o ./pkg/bindings_bg.wasm ./pkg/bindings_bg.wasm
