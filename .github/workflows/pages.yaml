@@ -24,12 +24,12 @@ jobs:
           sudo apt update
           sudo apt install binaryen
           cargo install wasm-bindgen-cli
+          rustup target add wasm32-unknown-unknown
       - name: Build bindings
         run: |
           cd pages
           make
           rm src target Cargo.toml Cargo.lock Makefile -rf
-          rustup target add wasm32-unknown-unknown
       - name: Minify website
         uses: nizarmah/auto-minify@v3.0.0
         with:
